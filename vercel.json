@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/cron/daily-overdue-check", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/stale-issue-detection", "schedule": "30 7 * * *" },
+    { "path": "/api/cron/weekly-project-summary", "schedule": "0 8 * * 1" },
+    { "path": "/api/cron/import-failure-monitor", "schedule": "0 9 * * *" }
+  ]
+}

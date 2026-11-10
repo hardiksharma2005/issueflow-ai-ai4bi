@@ -194,6 +194,7 @@ export function mockExtract(input: ExtractionInput): RawExtraction {
     ref: a.ref,
     description: `[Simulated] Image content was not analysed in demo mode. File "${a.fileName}" was uploaded alongside the chat.`,
   }));
+  const unplaced: typeof input.looseAttachments = [];
   for (const a of input.looseAttachments) {
     const nameTokens = tokens(a.fileName.replace(/[-_]/g, " "));
     let best: Cluster | null = null;
@@ -206,6 +207,7 @@ export function mockExtract(input: ExtractionInput): RawExtraction {
       }
     }
     if (best && bestScore > 0) best.attachmentRefs.add(a.ref);
+    else unplaced.push(a);
   }
 
   const issues: RawIssue[] = clusters.map((c) => {
@@ -250,6 +252,23 @@ export function mockExtract(input: ExtractionInput): RawExtraction {
         m.text ? ` with the caption "${m.text.slice(0, 160)}"` : ""
       }.`,
     }));
+
+  // The mock cannot see images, so screenshots it could not place become low-confidence
+  // drafts asking a human to describe them (a real vision model would read them).
+  for (const a of unplaced) {
+    issues.push({
+      title: `Review uploaded ${a.kind === "image" ? "screenshot" : "file"}: ${a.fileName}`.slice(0, 200),
+      description: `"${a.fileName}" was uploaded without a matching chat message. Demo mode does not analyse image content — open the file and describe the problem before approving.`,
+      category: "other",
+      priority: "medium",
+      reported_by: null,
+      message_refs: [],
+      attachment_refs: [a.ref],
+      suggested_assignee: null,
+      confidence: 0.35,
+      possible_duplicate_of: null,
+    });
+  }
 
   return { issues, attachment_findings: [...messageFindings, ...looseFindings] };
 }
