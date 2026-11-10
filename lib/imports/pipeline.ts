@@ -52,6 +52,23 @@ async function loadImport(supabase: SupabaseClient, importId: string) {
   return data;
 }
 
+/** Downloads a stored object, retrying once: a dropped connection (ECONNRESET) shouldn't fail an import. */
+async function downloadBytes(supabase: SupabaseClient, path: string, name: string) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const { data: blob, error } = await supabase.storage.from(BUCKET).download(path);
+      if (error || !blob) throw error ?? new Error("empty download");
+      return new Uint8Array(await blob.arrayBuffer());
+    } catch (err) {
+      if (attempt >= 1) {
+        console.error("[import download]", name, err);
+        throw new ImportError(`Could not read ${name}`);
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+}
+
 /** Extract chat text + media from uploaded files (TXT, ZIP, images, documents). */
 async function collectFiles(supabase: SupabaseClient, imp: ImportRecord) {
   const prefix = rawPrefix(imp.project_id, imp.id);
@@ -65,13 +82,11 @@ async function collectFiles(supabase: SupabaseClient, imp: ImportRecord) {
   let total = 0;
 
   for (const obj of objects) {
-    const { data: blob, error: dlError } = await supabase.storage.from(BUCKET).download(`${prefix}/${obj.name}`);
-    if (dlError || !blob) throw new ImportError(`Could not read ${obj.name}`);
-    total += blob.size;
+    const bytes = await downloadBytes(supabase, `${prefix}/${obj.name}`, obj.name);
+    total += bytes.byteLength;
     if (total > MAX_IMPORT_TOTAL_BYTES) throw new ImportError("Import is larger than 100 MB in total");
 
-    const check = checkFile(obj.name, blob.size);
-    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const check = checkFile(obj.name, bytes.byteLength);
     if (!check.ok || !check.info) {
       warnings.push(check.error ?? `${obj.name}: rejected`);
       continue;
@@ -142,6 +157,14 @@ export async function parseImport(
   await setStatus(supabase, imp.id, { status: "parsing", error_message: null });
 
   try {
+    if (imp.status === "failed") {
+      // Retry after a partial failure: remove what the previous attempt stored, or the
+      // unique (import_id, seq) / storage_path constraints would reject the new rows.
+      for (const table of ["attachments", "source_messages"] as const) {
+        const { error } = await supabase.from(table).delete().eq("import_id", imp.id);
+        if (error) throw error;
+      }
+    }
     const { chats, media, warnings, fileNames } = await collectFiles(supabase, imp);
     if (chats.length > 1) warnings.push(`${chats.length} chat files found; they were combined in upload order.`);
     if (chats.length === 0 && media.length === 0) throw new ImportError("No supported files were found");

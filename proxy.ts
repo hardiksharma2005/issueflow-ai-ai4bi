@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { normalizeSupabaseUrl } from "@/lib/env";
 
@@ -37,7 +38,10 @@ export async function proxy(request: NextRequest) {
   });
 
   // getClaims() validates the JWT; do not trust getSession() on the server.
-  const { data } = await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims();
+  // Auth server unreachable: don't treat a signed-in user as signed out. The page's own
+  // check fails the same way and shows a retryable error instead of the login form.
+  if (error && isAuthRetryableFetchError(error)) return response;
   const signedIn = Boolean(data?.claims?.sub);
 
   if (!signedIn && !isPublic && path !== "/") {
