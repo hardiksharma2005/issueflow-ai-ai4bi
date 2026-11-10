@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
+import { resilientFetch } from "./fetch";
 
 /**
  * Supabase client acting AS THE SIGNED-IN USER. Every query goes through Row Level
@@ -10,6 +11,7 @@ import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
 export async function createClient() {
   const cookieStore = await cookies();
   return createServerClient(supabaseUrl(), supabaseAnonKey(), {
+    global: { fetch: resilientFetch },
     cookies: {
       getAll() {
         return cookieStore.getAll();

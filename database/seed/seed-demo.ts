@@ -11,6 +11,7 @@ import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { parseWhatsAppChat } from "../../lib/whatsapp/parser";
 import { normalizeSupabaseUrl } from "../../lib/env";
+import { resilientFetch } from "../../lib/supabase/fetch";
 
 config({ path: ".env.local" });
 config();
@@ -21,7 +22,7 @@ const password = process.env.DEMO_PASSWORD;
 if (!url || !serviceKey) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
 if (!password || password.length < 8) throw new Error("Set DEMO_PASSWORD (min 8 characters) in .env.local");
 
-const db = createClient(normalizeSupabaseUrl(url), serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+const db = createClient(normalizeSupabaseUrl(url), serviceKey, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: resilientFetch } });
 const reset = process.argv.includes("--reset");
 
 const DAY = 86_400_000;

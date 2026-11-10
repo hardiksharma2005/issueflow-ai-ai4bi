@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseUrl } from "@/lib/env";
+import { resilientFetch } from "./fetch";
 
 /**
  * Service-role client: BYPASSES Row Level Security.
@@ -13,5 +14,6 @@ export function createAdminClient() {
   if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) is not set.");
   return createClient(supabaseUrl(), key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: resilientFetch },
   });
 }

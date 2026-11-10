@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { normalizeSupabaseUrl } from "@/lib/env";
+import { resilientFetch } from "@/lib/supabase/fetch";
 
 // Runs before every page request: refreshes the Supabase session cookie and keeps
 // signed-out users out of the application. (Authorization is still enforced again
@@ -24,6 +25,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const supabase = createServerClient(normalizeSupabaseUrl(url), key, {
+    global: { fetch: resilientFetch },
     cookies: {
       getAll() {
         return request.cookies.getAll();
