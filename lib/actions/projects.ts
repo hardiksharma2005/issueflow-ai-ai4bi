@@ -64,14 +64,19 @@ export async function deleteProject(projectId: string, confirmKey: string): Prom
     if (project.key !== confirmKey.trim().toUpperCase()) {
       return { ok: false, error: `Type the project key ${project.key} to confirm deletion` };
     }
-    // Remove stored evidence first (storage objects are not cascaded by Postgres).
+    // Storage objects are not cascaded by Postgres: collect attachments and the raw
+    // uploads of every import, and remove them once the rows are gone.
     const { data: files } = await supabase.from("attachments").select("storage_path").eq("project_id", id);
-    if (files?.length) {
-      await supabase.storage.from("evidence").remove(files.map((f) => f.storage_path));
+    const { data: imports } = await supabase.from("imports").select("id").eq("project_id", id);
+    const paths = (files ?? []).map((f) => f.storage_path);
+    for (const imp of imports ?? []) {
+      const raw = await supabase.storage.from("evidence").list(`${id}/imports/${imp.id}/raw`);
+      paths.push(...(raw.data ?? []).map((o) => `${id}/imports/${imp.id}/raw/${o.name}`));
     }
     const { data: rows, error } = await supabase.from("projects").delete().eq("id", id).select("id");
     if (error) throw error;
     if (!rows?.length) return { ok: false, error: "You do not have permission to delete this project" };
+    if (paths.length) await supabase.storage.from("evidence").remove(paths);
     revalidatePath("/projects");
     return ok(undefined, "Project deleted");
   } catch (err) {

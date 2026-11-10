@@ -153,10 +153,27 @@ const PAST_CHAT = `27/10/2026, 08:40 - Vikram Rao: Morning. Water is leaking fro
 27/10/2026, 15:20 - Kavita Nair: Also the lights near the windows in the open-plan area keep flickering
 27/10/2026, 15:22 - Rohan Kapoor: Noted, will add to the snag list`;
 
+/** Every object path under a storage prefix (list() is one level deep; folders have no id). */
+async function listFiles(prefix: string): Promise<string[]> {
+  const entries = must(await db.storage.from("evidence").list(prefix, { limit: 1000 }), `list ${prefix}`);
+  const nested = await Promise.all(entries.map((e) => (e.id ? [`${prefix}/${e.name}`] : listFiles(`${prefix}/${e.name}`))));
+  return nested.flat();
+}
+
 async function main() {
   if (reset) {
     must(await db.from("projects").delete().eq("is_demo", true).select("id"), "remove demo projects");
-    console.log("Removed existing demo projects.");
+    // Storage is not cascaded: remove files of projects that no longer exist (the demo
+    // projects just deleted, plus any left behind earlier). Nothing can reference them.
+    const live = new Set(must(await db.from("projects").select("id"), "list projects").map((p) => p.id));
+    const folders = must(await db.storage.from("evidence").list("", { limit: 1000 }), "list storage");
+    let removed = 0;
+    for (const folder of folders.filter((f) => !live.has(f.name))) {
+      const paths = await listFiles(folder.name);
+      for (let i = 0; i < paths.length; i += 500) check(await db.storage.from("evidence").remove(paths.slice(i, i + 500)), "remove files");
+      removed += paths.length;
+    }
+    console.log(`Removed existing demo projects (and ${removed} stored file(s)).`);
   }
   const { count } = await db.from("projects").select("id", { count: "exact", head: true }).eq("is_demo", true);
   if ((count ?? 0) > 0) {
