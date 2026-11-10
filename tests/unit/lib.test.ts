@@ -4,6 +4,7 @@ import { describeCron, nextRun } from "@/lib/automation/cron";
 import { buildReport, toCsv, type ReportIssue } from "@/lib/reports";
 import { checkFile, sanitizeFileName, sniffMatches, typeFromName } from "@/lib/validation/files";
 import { matchMedia, timestampFromFileName } from "@/lib/whatsapp/media";
+import { safeRedirectPath } from "@/lib/redirect";
 import { issueFiltersSchema, issueUpdateSchema, projectSchema, signUpSchema } from "@/lib/validation/schemas";
 
 const NOW = new Date("2026-11-10T12:00:00Z");
@@ -157,5 +158,17 @@ describe("input schemas", () => {
   });
   it("ignores invalid filter values instead of failing", () => {
     expect(issueFiltersSchema.parse({ status: "nope", priority: "high" })).toEqual({ priority: "high" });
+  });
+});
+
+describe("safe redirects", () => {
+  it("keeps same-origin paths", () => {
+    expect(safeRedirectPath("/issues?view=board")).toBe("/issues?view=board");
+    expect(safeRedirectPath("/projects/abc#members")).toBe("/projects/abc#members");
+  });
+  it("rejects anything that resolves to another host", () => {
+    for (const next of ["//evil.com", "/\\evil.com", "/\t/evil.com", "/\n/evil.com", "https://evil.com", "evil.com", "", null, undefined]) {
+      expect(safeRedirectPath(next)).toBe("/dashboard");
+    }
   });
 });

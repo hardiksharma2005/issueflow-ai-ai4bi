@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/env";
+import { safeRedirectPath } from "@/lib/redirect";
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -11,17 +12,11 @@ import {
 } from "@/lib/validation/schemas";
 import { fail, ok, type ActionResult } from "./result";
 
-/** Only allow same-site relative redirects (prevents open-redirects via ?next=). */
-function safeNext(next?: string | null) {
-  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return "/dashboard";
-  return next;
-}
-
 export async function signIn(_: unknown, form: FormData): Promise<ActionResult> {
   let next = "/dashboard";
   try {
     const input = signInSchema.parse(Object.fromEntries(form));
-    next = safeNext(input.next);
+    next = safeRedirectPath(input.next);
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({ email: input.email, password: input.password });
     if (error) {
