@@ -27,17 +27,23 @@ export interface ExistingIssueForDedup {
   status: string;
 }
 
+const MAX_RATE_LIMIT_WAIT_MS = 30_000;
+
 async function callWithRetry(provider: AIProvider, input: ExtractionInput) {
   let lastError: unknown;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // One retry for malformed output or transient errors; rate limits (with a wait the
+  // provider asks for) get up to three, so multi-batch imports on free plans complete.
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const raw = await provider.extract(input);
       return { raw, report: validateExtraction(raw, input) };
     } catch (err) {
       lastError = err;
+      const rateLimited = err instanceof AIProviderError && err.retryAfterMs !== undefined;
       const retryable = err instanceof AIOutputError || (err instanceof AIProviderError && err.retryable);
-      if (!retryable) break;
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      if (!retryable || attempt >= (rateLimited ? 3 : 1)) break;
+      const wait = rateLimited ? Math.min(err.retryAfterMs!, MAX_RATE_LIMIT_WAIT_MS) : 1000 * (attempt + 1);
+      await new Promise((r) => setTimeout(r, wait));
     }
   }
   throw lastError;
@@ -48,11 +54,14 @@ export async function runExtraction(
   input: ExtractionInput,
   existing: ExistingIssueForDedup[],
 ): Promise<ExtractionOutcome> {
+  const size = provider.info.batchSize ?? BATCH_SIZE;
+  const existingIssues = input.existingIssues.slice(0, provider.info.maxExistingIssues ?? 200);
   const batches: ExtractionInput[] = [];
-  for (let i = 0; i < Math.max(1, input.messages.length); i += BATCH_SIZE) {
+  for (let i = 0; i < Math.max(1, input.messages.length); i += size) {
     batches.push({
       ...input,
-      messages: input.messages.slice(i, i + BATCH_SIZE),
+      existingIssues,
+      messages: input.messages.slice(i, i + size),
       // loose screenshots go with the first batch only
       looseAttachments: i === 0 ? input.looseAttachments : [],
     });

@@ -4,16 +4,16 @@ Turn WhatsApp support conversations into a reviewed, trackable issue list.
 
 Upload a WhatsApp chat export (`.txt` or `.zip` with media), screenshots and documents. IssueFlow AI parses the conversation, matches media to the messages that sent them, asks an AI model to propose issue drafts with evidence, flags likely duplicates, and puts every draft in front of a human. **Nothing becomes an issue until a manager approves it.** Approved issues then live in a normal tracker: table and Kanban views, comments, attachments, activity history, dashboards, CSV reports and scheduled automations.
 
-Runs completely free in **demo mode**: a deterministic local `MockAIProvider` replaces the AI model and every result it produces is labelled **Simulated**. Switch to xAI Grok with two environment variables when you want real model output.
+Runs completely free in **demo mode**: a deterministic local `MockAIProvider` replaces the AI model and every result it produces is labelled **Simulated**. For real model output use **GroqCloud** (free plan) or **xAI Grok** (paid) by setting two environment variables.
 
 | | |
 |---|---|
 | Stack | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui · Recharts |
 | Backend | Supabase: Postgres with Row Level Security, Auth, Storage |
-| AI | xAI Grok (Responses API, strict JSON schema) or the free MockAIProvider |
+| AI | GroqCloud `openai/gpt-oss-120b` (free plan), xAI Grok (Responses API) or the free MockAIProvider — all with strict JSON-schema output |
 | Validation | Zod on every server boundary; AI output validated against the source conversation |
 | Scheduling | Vercel Cron → `/api/cron/[job]` with a bearer secret |
-| Tests | Vitest: 56 unit tests, 12 integration tests against a real Supabase project; 36-check browser suite (playwright-core) |
+| Tests | Vitest: 58 unit tests, 12 integration tests against a real Supabase project; 36-check browser suite (playwright-core) |
 
 ## Quick start (free mode, ~10 minutes)
 
@@ -37,7 +37,7 @@ Values for `.env.local` (full walkthrough in [docs/08-deployment.md](docs/08-dep
 | `SUPABASE_DB_URL` | **Connect** → Session pooler URI, with your database password (no `[ ]`) — only used by `db:migrate` |
 | `CRON_SECRET` | any random string ≥ 16 chars: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `DEMO_PASSWORD` | password you choose for the demo users (≥ 8 chars) |
-| `AI_PROVIDER` | `mock` (free, default) or `grok` |
+| `AI_PROVIDER` | `mock` (free, default), `groq` (with `GROQ_API_KEY`) or `grok` (with `XAI_API_KEY`) |
 
 In the Supabase dashboard also set **Authentication → URL Configuration**: Site URL `http://localhost:3000`, redirect URL `http://localhost:3000/auth/callback`, and (for demos) turn off **Confirm email** under Authentication → Sign In / Providers → Email.
 
@@ -54,13 +54,16 @@ After `npm run db:seed`, sign in with any of these and the `DEMO_PASSWORD` from 
 
 The 5-minute demo is in [docs/12-demo-script.md](docs/12-demo-script.md). The short version: sign in as the manager → **Imports → New import** → pick *BLOOM* → **Use sample WhatsApp data** → **Upload & extract messages** → **Process with AI** → review the 7 drafts, approve one, link the out-of-stock one to its existing duplicate.
 
-## Using real AI (xAI Grok)
+## Using a real AI model
 
-```env
-AI_PROVIDER=grok
-XAI_API_KEY=xai-...
-XAI_MODEL=grok-4.7          # optional; default
-```
+**Groq and Grok are different companies** with different keys — use the variables that match your key.
+
+| | GroqCloud ([console.groq.com](https://console.groq.com)) | xAI Grok ([console.x.ai](https://console.x.ai)) |
+|---|---|---|
+| Variables | `AI_PROVIDER=groq`, `GROQ_API_KEY=gsk_…`, optional `GROQ_MODEL` (default `openai/gpt-oss-120b`) | `AI_PROVIDER=grok`, `XAI_API_KEY=xai-…`, optional `XAI_MODEL` (default `grok-4.7`) |
+| Cost | Free plan, rate-limited (≈ 8K tokens/min on gpt-oss models) | Billed per token |
+| Screenshots | Not analysed (text-only model); kept as evidence | Read by the model (JPEG/PNG) |
+| Verified | Yes — sample chat → 7 drafts in ~16 s | Not called yet |
 
 Grok usage is **billed per token by xAI** (see [docs/05-ai-integration.md](docs/05-ai-integration.md) for current pricing and a cost estimate per import). The app never falls back from Grok to the mock or the other way round: if `AI_PROVIDER=grok` and the key is missing, AI processing is disabled with an explanatory message. The API key is only read on the server.
 
@@ -100,7 +103,8 @@ Grok usage is **billed per token by xAI** (see [docs/05-ai-integration.md](docs/
 ## Known limitations
 
 - **Deployment is not done yet.** The app has been verified locally against a real Supabase project; Vercel deployment and Vercel Cron scheduling have not been run. See [docs/08-deployment.md](docs/08-deployment.md).
-- **Grok has not been called end-to-end.** The provider is implemented against the documented xAI Responses API and its response parsing is unit-tested, but no paid API call was made during development.
+- **xAI Grok has not been called end-to-end** (paid); its request building and response parsing are unit-tested. **GroqCloud has been verified end-to-end** with the sample chat.
+- With Groq, screenshots are stored and linked as evidence but not read by the model, and the free plan's per-minute token limit makes large chats slower (processed in batches of 60 messages, waiting when rate-limited).
 - The mock provider is a rule-based heuristic tuned on realistic support chats. It is good enough to demonstrate the workflow, not a substitute for a model.
 - Screenshots are only *read* by Grok (JPEG/PNG). The mock provider attaches screenshots to issues by timing and context but cannot see their contents.
 - Voice notes, video and documents are stored as evidence but not transcribed or analysed.

@@ -57,12 +57,16 @@ export interface RawExtraction {
 }
 
 export interface ProviderInfo {
-  /** "mock" | "grok" */
+  /** "mock" | "grok" | "groq" */
   name: string;
   model: string;
   /** true when results are simulated and no real model was called */
   simulated: boolean;
   supportsVision: boolean;
+  /** Messages per request; smaller for providers with low token-per-minute limits. */
+  batchSize?: number;
+  /** Existing issues listed for duplicate detection (they cost input tokens). */
+  maxExistingIssues?: number;
 }
 
 export interface AIProvider {
@@ -75,6 +79,8 @@ export class AIProviderError extends Error {
   constructor(
     message: string,
     readonly retryable = false,
+    /** Provider-requested wait before retrying (e.g. a 429 retry-after header). */
+    readonly retryAfterMs?: number,
   ) {
     super(message);
   }

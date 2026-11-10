@@ -34,7 +34,8 @@
 | Import status **Duplicate** | The same conversation was already imported into this project | Open the original import (linked in the message). Delete it first to import again. |
 | Import status **Failed** after a network hiccup | A request to Supabase failed mid-way | Click **Retry extraction** / **Retry AI processing**. Retries clean up partial results. |
 | "AI processing is limited to 15 imports per hour" | Per-user rate limit | Wait, or raise `AI_RUNS_PER_HOUR` in `lib/imports/pipeline.ts`. |
-| "Process with AI" is disabled with a message about XAI_API_KEY | `AI_PROVIDER=grok` without a key | Add `XAI_API_KEY`, or set `AI_PROVIDER=mock`. There is intentionally no fallback. |
+| "Process with AI" is disabled with a message about XAI_API_KEY / GROQ_API_KEY | Provider selected without its key, or a key in the wrong variable (Groq keys start `gsk_`, xAI keys `xai-`) | Put the key in the matching variable (`AI_PROVIDER=groq` + `GROQ_API_KEY`, or `AI_PROVIDER=grok` + `XAI_API_KEY`), or set `AI_PROVIDER=mock`. There is intentionally no fallback. |
+| "Groq rate limit reached" | Free-plan tokens-per-minute limit | The app already waits and retries; for very large chats wait a minute and click **Retry AI processing**, or upgrade the Groq plan. |
 | "Grok API rejected the API key (check XAI_API_KEY and account credits)" | Invalid key or no credits | Check the key and billing in the xAI console. |
 | "Grok API rate limit or spending limit reached" | xAI limits | Retry later or raise the limit in the xAI console. |
 | A file is listed as skipped in Import notes | Unsupported type, too large, or its content doesn't match its extension | Upload a supported type (see [04](04-whatsapp-processing.md#server-side-checks)). |

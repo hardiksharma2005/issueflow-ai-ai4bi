@@ -20,7 +20,7 @@ export function ProcessPanel({
   provider,
 }: {
   importId: string;
-  provider: { name: string; model: string; configured: boolean; simulated: boolean };
+  provider: { name: string; label: string; model: string; configured: boolean; missing: string; simulated: boolean; supportsVision: boolean };
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -39,11 +39,13 @@ export function ProcessPanel({
             </>
           ) : provider.configured ? (
             <>
-              Uses xAI <strong>{provider.model}</strong> through the server. The conversation is treated as untrusted data and every response is validated.
-              API usage is billed by xAI.
+              Uses {provider.label} <strong>{provider.model}</strong> through the server. The conversation is treated as untrusted data and every response is validated.{" "}
+              {provider.name === "groq"
+                ? "Screenshots are not analysed by this model. Large chats are processed in batches within the free plan's rate limits."
+                : "API usage is billed by xAI."}
             </>
           ) : (
-            <>AI_PROVIDER is set to grok but XAI_API_KEY is missing. Ask an admin to configure it or switch to mock mode.</>
+            <>AI is not configured: {provider.missing}. Ask an admin to fix it or switch to mock mode.</>
           )}
         </p>
       </div>

@@ -4,19 +4,23 @@ Code: `lib/ai/`. Tests: `tests/unit/ai.test.ts`.
 
 ## Providers
 
-Both implement `AIProvider` (`lib/ai/types.ts`): `extract(input) → raw JSON text`. Everything after that — validation, duplicate detection, storage, review — is shared, so demo mode exercises the real pipeline.
+All three implement `AIProvider` (`lib/ai/types.ts`): `extract(input) → raw JSON text`. Everything after that — validation, duplicate detection, storage, review — is shared, so demo mode exercises the real pipeline.
 
-| | `MockAIProvider` (default) | `GrokAIProvider` |
-|---|---|---|
-| Select with | `AI_PROVIDER=mock` (or unset) | `AI_PROVIDER=grok` + `XAI_API_KEY` |
-| Cost | Free, runs in-process | Billed per token by xAI |
-| Model id recorded | `mock-heuristic-v1` | `XAI_MODEL` (default `grok-4.7`) |
-| Reads screenshots | No | Yes — JPEG/PNG, up to 8 per call, ≤ 20 MB each |
-| Output labelled | **Simulated** badge on the import and on every draft; image findings prefixed `[Simulated]`; `ai_simulated` / `is_simulated` stored in the database | Model name shown |
+| | `MockAIProvider` (default) | `GroqAIProvider` | `GrokAIProvider` |
+|---|---|---|---|
+| Select with | `AI_PROVIDER=mock` (or unset) | `AI_PROVIDER=groq` + `GROQ_API_KEY` | `AI_PROVIDER=grok` + `XAI_API_KEY` |
+| Company | — | Groq (GroqCloud) | xAI |
+| Cost | Free, runs in-process | Free plan, rate-limited | Billed per token by xAI |
+| Model id recorded | `mock-heuristic-v1` | `GROQ_MODEL` (default `openai/gpt-oss-120b`) | `XAI_MODEL` (default `grok-4.7`) |
+| Reads screenshots | No | No (text-only model) | Yes — JPEG/PNG, up to 8 per call, ≤ 20 MB each |
+| Batch size | 150 messages | 60 messages, 60 existing issues (per-minute token limit) | 150 messages |
+| Verified end-to-end | Yes | Yes (sample chat → 7 drafts, ~16 s) | No (paid; unit-tested only) |
+| Output labelled | **Simulated** badge on the import and on every draft; image findings prefixed `[Simulated]`; `ai_simulated` / `is_simulated` stored in the database | Provider and model shown | Model name shown |
 
 Selection rules (`lib/ai/index.ts`):
 
-- There is **no automatic fallback** in either direction. If `AI_PROVIDER=grok` and the key is missing, the *Process with AI* button is disabled and explains why; the app never quietly uses a paid service or presents mock output as Grok's.
+- There is **no automatic fallback** between providers.
+- A Groq key (`gsk_…`) in `XAI_API_KEY`, or an xAI key in `GROQ_API_KEY`, is detected and explained instead of producing a confusing 401. If `AI_PROVIDER=grok` and the key is missing, the *Process with AI* button is disabled and explains why; the app never quietly uses a paid service or presents mock output as Grok's.
 - The key is read only in server code (`server-only` modules). It is never sent to the browser, logged, or included in error messages.
 
 ## Grok request
@@ -40,6 +44,14 @@ Selection rules (`lib/ai/index.ts`):
 
 - 120-second timeout. 401/403 → "rejected the API key (check XAI_API_KEY and account credits)"; 429 → "rate limit or spending limit reached" (retryable); 5xx and timeouts are retryable. Error text never includes the request body or headers.
 - The response text is read from `output_text`, or from `output[].content[]` items of type `output_text`.
+
+## Groq request
+
+`POST https://api.groq.com/openai/v1/chat/completions` with `messages` (system + user, text only), `response_format: { type: "json_schema", json_schema: { name, strict: true, schema } }`, `reasoning_effort: "low"`, `include_reasoning: false` (reasoning tokens count against the per-minute limit), `temperature: 0.2`. Strict structured output is supported on `openai/gpt-oss-120b` and `openai/gpt-oss-20b`.
+
+- 429 responses honour `retry-after` (capped at 30 s, up to 3 retries) so multi-batch imports complete on the free plan.
+- 400 `json_validate_failed` (output didn't match the schema) is retried once.
+- Groq states that API requests are not stored by default (except for features like batch jobs, or up to 30 days for abuse/reliability investigation).
 
 ## Prompt
 

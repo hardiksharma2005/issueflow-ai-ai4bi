@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { runExtraction } from "@/lib/ai/extract";
 import { findDuplicates, similarity } from "@/lib/ai/duplicates";
 import { makeTitle, MockAIProvider, mockExtract } from "@/lib/ai/mock";
 import { outputText } from "@/lib/ai/grok";
+import { GroqAIProvider } from "@/lib/ai/groq";
 import { AIOutputError, extractJson, validateExtraction } from "@/lib/ai/validate";
-import type { AIProvider, ExtractionInput } from "@/lib/ai/types";
+import { AIProviderError, type AIProvider, type ExtractionInput } from "@/lib/ai/types";
 import { parseWhatsAppChat } from "@/lib/whatsapp/parser";
 
 const sample = readFileSync(
@@ -183,5 +184,45 @@ describe("Grok response parsing", () => {
     expect(outputText({ output: [{ type: "reasoning" }, { type: "message", content: [{ type: "output_text", text: '{"a":1}' }] }] })).toBe('{"a":1}');
     expect(outputText({ output_text: "x" })).toBe("x");
     expect(outputText({})).toBeNull();
+  });
+});
+
+describe("GroqAIProvider", () => {
+  const input: ExtractionInput = {
+    projectName: "Demo",
+    messages: [{ ref: "m1", sender: "Priya", sentAt: "2026-11-03T09:15:00Z", text: "Checkout is broken", attachment: { ref: "a1", fileName: "x.png", mimeType: "image/png", kind: "image", base64: "AAAA" } }],
+    looseAttachments: [],
+    existingIssues: [],
+  };
+
+  it("sends a strict JSON-schema request without images and returns the content", async () => {
+    let sent: { url: string; body: Record<string, unknown>; auth: string } | null = null;
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      sent = { url, body: JSON.parse(String(init.body)), auth: new Headers(init.headers).get("authorization") ?? "" };
+      return new Response(JSON.stringify({ choices: [{ message: { content: '{"issues":[],"attachment_findings":[]}' } }] }), { status: 200 });
+    });
+    try {
+      const out = await new GroqAIProvider({ apiKey: "gsk_test", model: "openai/gpt-oss-120b" }).extract(input);
+      expect(out).toBe('{"issues":[],"attachment_findings":[]}');
+      expect(sent!.url).toBe("https://api.groq.com/openai/v1/chat/completions");
+      expect(sent!.auth).toBe("Bearer gsk_test");
+      expect(sent!.body.response_format).toMatchObject({ type: "json_schema", json_schema: { strict: true } });
+      expect(JSON.stringify(sent!.body)).not.toContain("AAAA"); // text-only model: no image data
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("reports rate limits as retryable with the requested wait, and never echoes the key", async () => {
+    vi.stubGlobal("fetch", async () => new Response("rate limited", { status: 429, headers: { "retry-after": "7" } }));
+    try {
+      const err = await new GroqAIProvider({ apiKey: "gsk_secret", model: "m" }).extract(input).catch((e) => e);
+      expect(err).toBeInstanceOf(AIProviderError);
+      expect(err.retryable).toBe(true);
+      expect(err.retryAfterMs).toBe(7000);
+      expect(err.message).not.toContain("gsk_secret");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

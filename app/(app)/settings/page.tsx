@@ -56,13 +56,15 @@ export default async function SettingsPage() {
           {provider.simulated ? <FlaskConical className="mt-0.5 size-5 text-amber-600" aria-hidden /> : <Bot className="mt-0.5 size-5 text-primary" aria-hidden />}
           <div>
             <p className="font-medium">
-              {provider.simulated ? "MockAIProvider (demo mode)" : `xAI Grok · ${provider.model}`}
-              {!provider.configured && <span className="ml-2 text-destructive">— XAI_API_KEY missing</span>}
+              {provider.simulated ? "MockAIProvider (demo mode)" : `${provider.label} · ${provider.model}`}
+              {!provider.configured && <span className="ml-2 text-destructive">— {provider.missing}</span>}
             </p>
             <p className="mt-1 text-muted-foreground">
               {provider.simulated
-                ? "Deterministic, rule-based extraction that runs locally at no cost. Results are labelled “Simulated”. Set AI_PROVIDER=grok and XAI_API_KEY to use Grok."
-                : "Real model calls are billed by xAI per token. Conversations are sent as untrusted data and every response is schema-validated before drafts are created."}
+                ? "Deterministic, rule-based extraction that runs locally at no cost. Results are labelled “Simulated”. Set AI_PROVIDER=groq (GroqCloud) or AI_PROVIDER=grok (xAI) with the matching API key to use a real model."
+                : provider.name === "groq"
+                  ? "Real model calls through GroqCloud (free plan, rate-limited). Text only: screenshots are kept as evidence but not analysed. Conversations are sent as untrusted data and every response is schema-validated before drafts are created."
+                  : "Real model calls are billed by xAI per token. Conversations are sent as untrusted data and every response is schema-validated before drafts are created."}
             </p>
           </div>
         </div>

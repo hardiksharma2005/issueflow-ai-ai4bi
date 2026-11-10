@@ -57,8 +57,9 @@ git log -p | grep -iE "sb_secret_|service_role|xai-" || echo "clean"
    | `SUPABASE_SERVICE_ROLE_KEY` | as in `.env.local` — mark **Sensitive** |
    | `NEXT_PUBLIC_SITE_URL` | `https://<project>.vercel.app` (or your domain) |
    | `CRON_SECRET` | a new random string — mark **Sensitive** |
-   | `AI_PROVIDER` | `mock` (or `grok`) |
-   | `XAI_API_KEY`, `XAI_MODEL` | only with `AI_PROVIDER=grok` — mark **Sensitive** |
+   | `AI_PROVIDER` | `mock`, `groq` or `grok` |
+   | `GROQ_API_KEY`, `GROQ_MODEL` | only with `AI_PROVIDER=groq` — mark the key **Sensitive** |
+   | `XAI_API_KEY`, `XAI_MODEL` | only with `AI_PROVIDER=grok` — mark the key **Sensitive** |
 
    `SUPABASE_DB_URL` and `DEMO_PASSWORD` are **not** needed on Vercel.
 
@@ -107,6 +108,6 @@ Then check **Automations** in the app (admin) for the logged run, and the **Cron
 - [ ] `NEXT_PUBLIC_SITE_URL` and Supabase Site URL / Redirect URLs point to the production domain
 - [ ] Demo data not seeded (or removed with `npm run db:reset-demo` then deleting demo users in Supabase Auth)
 - [ ] `CRON_SECRET` set; cron endpoint returns 401 without it
-- [ ] `AI_PROVIDER` decided; if `grok`, a spending limit set in the xAI console
+- [ ] `AI_PROVIDER` decided; if `grok`, a spending limit set in the xAI console; if `groq`, the free-plan limits are acceptable for expected import volume
 - [ ] First account registered by the intended admin (the first user becomes admin)
 - [ ] Supabase backups: daily backups are included on paid plans; on the free plan export the database periodically

@@ -20,9 +20,9 @@ Environment: Windows 11, Node.js 26.8, Next.js 16.4.6 production build (`next bu
 | `npm run lint` | pass, 0 problems |
 | `npm run typecheck` | pass |
 | `npm run build` | pass, 26 routes |
-| `npm test` | **56 / 56 passed** (3 files) |
+| `npm test` | **58 / 58 passed** (3 files) |
 | `npm run test:integration` | **12 / 12 passed** against the real database |
-| `npm run test:e2e` | **36 / 36 checks passed** |
+| `npm run test:e2e` | **36 / 36 checks passed** with `AI_PROVIDER=mock`, and again with `AI_PROVIDER=groq` (real model: 7 drafts, BLOOM-7 duplicate flagged) |
 | `npm run db:migrate` on an empty project | 5 migrations applied |
 | `npm run db:seed` / `db:reset-demo` | 5 users, 3 projects, 24 issues, 1 past import, 4 automation runs |
 
@@ -82,7 +82,7 @@ Environment: Windows 11, Node.js 26.8, Next.js 16.4.6 production build (`next bu
 
 ### Not verified
 
-- **xAI Grok end-to-end.** No API key was used (paid). Request building and response parsing are unit-tested; a real call has not been made.
+- **xAI Grok end-to-end.** No xAI key was used (paid). Request building and response parsing are unit-tested; a real call has not been made. (GroqCloud, a different provider, *was* verified end-to-end.)
 - **Vercel deployment and Vercel Cron.** Not deployed yet; cron was exercised locally over HTTP with the bearer secret.
 - **Email delivery** (confirmation, reset, invite). Email confirmation was off for testing; the forgot-password check used an address with no account so no email was sent.
 - **Real WhatsApp exports from many locales.** The parser is tested with Android/iOS, 12/24 h, dotted and ISO formats and localised attachment markers, using synthetic fixtures.

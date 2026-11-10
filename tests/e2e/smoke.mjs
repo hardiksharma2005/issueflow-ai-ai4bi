@@ -13,6 +13,8 @@ import { config } from "dotenv";
 
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3000";
+// Must match the AI_PROVIDER of the server under test (read from the same .env.local).
+const MOCK = (process.env.AI_PROVIDER ?? "mock").toLowerCase() === "mock";
 const PASSWORD = process.env.DEMO_PASSWORD;
 if (!PASSWORD) throw new Error("DEMO_PASSWORD must be set in .env.local (run npm run db:seed first)");
 const service = createClient(
@@ -123,12 +125,18 @@ try {
     const importUrl = page.url();
     check("chat parsed (37 messages)", /Messages\s*37/.test(await mainText(page)));
     await page.getByRole("button", { name: /Process with AI/ }).click();
-    await page.getByRole("button", { name: /^Approve$/ }).first().waitFor({ timeout: 180000 });
+    await page.getByRole("button", { name: /^Approve$/ }).first().waitFor({ timeout: 240000 });
     await page.waitForLoadState("networkidle");
     const drafts = await page.getByRole("button", { name: /^Approve$/ }).count();
-    check("AI drafts generated", drafts === 7, `${drafts} drafts`);
     const text = await mainText(page);
-    check("drafts labelled Simulated", /Simulated AI/.test(text));
+    if (MOCK) {
+      check("AI drafts generated", drafts === 7, `${drafts} drafts`);
+      check("drafts labelled Simulated", /Simulated AI/.test(text));
+    } else {
+      // A real model's output varies; the sample chat has 7 distinct issues.
+      check("AI drafts generated", drafts >= 5 && drafts <= 9, `${drafts} drafts from ${process.env.AI_PROVIDER}`);
+      check("real-model drafts not labelled Simulated", !/Simulated AI/.test(text));
+    }
     check("duplicate of BLOOM-7 flagged", /may already be tracked[\s\S]*BLOOM-7/.test(text));
     check("prompt injection not turned into an issue", !/ignore (all )?previous instructions/i.test(await page.locator("input[aria-label='Issue title']").evaluateAll((els) => els.map((e) => e.value).join("\n"))));
     await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 80)); } });
