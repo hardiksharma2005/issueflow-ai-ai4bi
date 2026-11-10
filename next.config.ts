@@ -1,15 +1,19 @@
 import type { NextConfig } from "next";
 
+// cacheComponents is intentionally disabled: almost every page in IssueFlow AI
+// reads the Supabase session cookie, so classic dynamic rendering is simpler.
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },
+    },
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "4mb",
     },
   },
 };

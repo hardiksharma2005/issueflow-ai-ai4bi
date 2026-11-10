@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# keep the documented template
+!.env.example
+
+# local scratch / generated
+/tmp/
+
