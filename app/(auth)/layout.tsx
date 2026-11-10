@@ -2,7 +2,7 @@ import { FileText, MessageCircle, ShieldCheck, Zap } from "lucide-react";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="grid min-h-svh lg:grid-cols-[1fr_1.1fr]">
+    <div className="grid grid-cols-1 min-h-svh lg:grid-cols-[1fr_1.1fr]">
       <div className="flex flex-col px-6 py-8 sm:px-10">
         <div className="flex items-center gap-2 font-semibold tracking-tight">
           <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
             Upload a WhatsApp export and screenshots. IssueFlow AI finds the distinct problems, links the evidence, and
             hands you drafts to approve.
           </p>
-          <ul className="mt-8 grid gap-4 text-sm">
+          <ul className="mt-8 grid grid-cols-1 gap-4 text-sm">
             {[
               { icon: MessageCircle, title: "Reads real exports", text: "Android and iOS formats, multiline messages and media." },
               { icon: FileText, title: "Drafts, not decisions", text: "Every AI result is reviewed by a person before it becomes an issue." },

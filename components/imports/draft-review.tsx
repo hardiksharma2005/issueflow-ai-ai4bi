@@ -49,7 +49,7 @@ export function DraftReview({ drafts, messages, files, members, issues, canRevie
   const done = drafts.filter((d) => d.status !== "pending");
   const [showDone, setShowDone] = useState(false);
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {pending.length === 0 && (
         <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
           All drafts have been reviewed. Approved issues are now in the tracker.
@@ -148,8 +148,8 @@ function DraftCard({
         )}
       </header>
 
-      <div className="grid gap-4 p-4 lg:grid-cols-[1fr_17rem]">
-        <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="grid grid-cols-1 gap-3">
           {canReview ? (
             <>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} aria-label="Issue title" className="font-medium" />
@@ -186,9 +186,9 @@ function DraftCard({
           )}
 
           {showEvidence && (
-            <div className="grid gap-3 rounded-lg border bg-muted/30 p-3">
+            <div className="grid grid-cols-1 gap-3 rounded-lg border bg-muted/30 p-3">
               {draftMessages.length > 0 ? (
-                <ul className="grid gap-1.5">
+                <ul className="grid grid-cols-1 gap-1.5">
                   {draftMessages.map((m) => (
                     <li key={m.id} className="flex items-start gap-1">
                       <MessageList messages={[m]} className="flex-1" />
@@ -226,7 +226,7 @@ function DraftCard({
                 </form>
               )}
               {canReview && files.length > 0 && (
-                <fieldset className="grid gap-1.5">
+                <fieldset className="grid grid-cols-1 gap-1.5">
                   <legend className="mb-1 text-xs font-medium text-muted-foreground">Evidence files from this import</legend>
                   {files.map((f) => (
                     <label key={f.id} className="flex items-center gap-2 text-xs">
@@ -248,7 +248,7 @@ function DraftCard({
           {issueDupes.length > 0 && (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
               <p className="font-medium">This may already be tracked:</p>
-              <ul className="mt-1 grid gap-1">
+              <ul className="mt-1 grid grid-cols-1 gap-1">
                 {issueDupes.map((c) => (
                   <li key={c.id} className="flex items-center gap-2 text-xs">
                     <Link href={`/issues/${c.id}`} target="_blank" className="font-mono text-primary hover:underline">
@@ -268,11 +268,11 @@ function DraftCard({
           )}
         </div>
 
-        <div className="grid content-start gap-3">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-3">
           {canReview ? (
             <>
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <Label className="text-xs">Category</Label>
                   <Select value={category} onValueChange={(v) => setCategory(v as IssueCategory)}>
                     <SelectTrigger className="h-8 w-full">
@@ -287,7 +287,7 @@ function DraftCard({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <Label className="text-xs">Priority</Label>
                   <Select value={priority} onValueChange={(v) => setPriority(v as IssuePriority)}>
                     <SelectTrigger className="h-8 w-full">
@@ -302,7 +302,7 @@ function DraftCard({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <Label className="text-xs">
                     Assignee
                     {draft.suggested_assignee && <span className="font-normal text-muted-foreground"> · AI suggests {draft.suggested_assignee}</span>}
@@ -321,7 +321,7 @@ function DraftCard({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <Label className="text-xs" htmlFor={`due-${draft.id}`}>
                     Due date
                   </Label>
@@ -339,11 +339,11 @@ function DraftCard({
                   <X /> Reject
                 </Button>
               </div>
-              <div className="grid gap-1.5 border-t pt-3">
+              <div className="grid grid-cols-1 gap-1.5 border-t pt-3">
                 <Label className="text-xs">Link to an existing issue (duplicate / follow-up)</Label>
                 <div className="flex gap-2">
                   <Select value={linkTarget} onValueChange={setLinkTarget}>
-                    <SelectTrigger className="h-8 min-w-0 flex-1">
+                    <SelectTrigger className="h-8 min-w-0 flex-1 *:data-[slot=select-value]:block *:data-[slot=select-value]:truncate">
                       <SelectValue placeholder="Choose issue…" />
                     </SelectTrigger>
                     <SelectContent>
@@ -360,11 +360,11 @@ function DraftCard({
                 </div>
               </div>
               {otherDrafts.length > 0 && (
-                <div className="grid gap-1.5">
+                <div className="grid grid-cols-1 gap-1.5">
                   <Label className="text-xs">Merge another draft into this one</Label>
                   <div className="flex gap-2">
                     <Select value={mergeTarget} onValueChange={setMergeTarget}>
-                      <SelectTrigger className="h-8 min-w-0 flex-1">
+                      <SelectTrigger className="h-8 min-w-0 flex-1 *:data-[slot=select-value]:block *:data-[slot=select-value]:truncate">
                         <SelectValue placeholder="Choose draft…" />
                       </SelectTrigger>
                       <SelectContent>

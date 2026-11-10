@@ -31,7 +31,7 @@ export default async function IssuesPage({ searchParams }: PageProps<"/issues">)
   const people = [...new Map(projects.flatMap((p) => p.members).map((m) => [m.id, { value: m.id, label: m.name }])).values()];
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <div>
         <Breadcrumbs items={[{ label: "Overview", href: "/dashboard" }, { label: "All issues" }]} />
         <PageHeader

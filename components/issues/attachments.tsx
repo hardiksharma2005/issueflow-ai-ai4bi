@@ -62,9 +62,9 @@ export function Attachments({
   };
 
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       {attachments.length === 0 && <p className="text-sm text-muted-foreground">No attachments.</p>}
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {attachments.map((a) => (
           <li key={a.id} className="overflow-hidden rounded-lg border bg-background">
             {a.mimeType.startsWith("image/") && a.url ? (

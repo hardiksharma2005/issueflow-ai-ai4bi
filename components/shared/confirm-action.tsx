@@ -49,7 +49,7 @@ export function ConfirmAction({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         {requireText && (
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="confirm-text">
               Type <span className="font-mono font-semibold">{requireText}</span> to confirm
             </Label>

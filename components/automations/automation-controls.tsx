@@ -71,7 +71,7 @@ export function NumberSetting({ jobId, field, label, value, min, max }: { jobId:
         });
       }}
     >
-      <div className="grid gap-1">
+      <div className="grid grid-cols-1 gap-1">
         <Label htmlFor={`${jobId}-${field}`} className="text-xs">
           {label}
         </Label>

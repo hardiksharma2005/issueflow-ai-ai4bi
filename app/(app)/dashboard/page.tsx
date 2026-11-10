@@ -49,7 +49,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   ];
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {params.password === "updated" && (
         <div className="rounded-lg border bg-muted/40 px-4 py-2 text-sm">Your password has been updated.</div>
       )}
@@ -88,11 +88,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         />
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <TimelineChart data={d.timeline} />
             <ResolutionChart data={d.resolutionTrend} />
           </div>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <BreakdownChart title="Issues by status" description="All issues" data={ISSUE_STATUSES.map((s) => ({ label: STATUS_LABELS[s], value: d.byStatus[s] }))} />
             <BreakdownChart title="Issues by priority" description="Unresolved issues" data={ISSUE_PRIORITIES.map((p) => ({ label: PRIORITY_LABELS[p], value: d.byPriority[p] }))} />
             <BreakdownChart title="Issues by category" description="All issues" data={ISSUE_CATEGORIES.map((c) => ({ label: CATEGORY_LABELS[c], value: d.byCategory[c] }))} />
@@ -100,7 +100,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Section title="Needs attention" description="Critical or overdue and still unresolved">
           {urgent.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">Nothing urgent right now.</p>

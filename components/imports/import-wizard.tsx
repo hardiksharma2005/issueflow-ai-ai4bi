@@ -107,7 +107,7 @@ export function ImportWizard({ projects, defaultProjectId }: { projects: { id: s
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <ol className="flex flex-wrap items-center gap-2 text-xs" aria-label="Import steps">
         {STEPS.map((s, i) => (
           <li key={s} className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export function ImportWizard({ projects, defaultProjectId }: { projects: { id: s
         ))}
       </ol>
 
-      <section className="grid gap-2 rounded-xl border bg-card p-5">
+      <section className="grid grid-cols-1 gap-2 rounded-xl border bg-card p-5">
         <Label htmlFor="project">1. Project</Label>
         <Select value={projectId} onValueChange={setProjectId} disabled={busy}>
           <SelectTrigger id="project" className="w-full sm:w-80">
@@ -190,7 +190,7 @@ export function ImportWizard({ projects, defaultProjectId }: { projects: { id: s
         </div>
 
         {files.length > 0 && (
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <h3 className="text-xs font-medium text-muted-foreground">3. Validation</h3>
             <ul className="divide-y rounded-lg border">
               {checks.map((c) => {

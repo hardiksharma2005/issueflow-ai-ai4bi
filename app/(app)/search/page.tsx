@@ -23,7 +23,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const hits = q ? await searchAll(q, 50) : [];
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <PageHeader title="Search" description={q ? `${hits.length} result(s) for “${q}”` : "Search projects, issues, comments and WhatsApp messages."} />
       <form action="/search" className="relative max-w-xl">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />

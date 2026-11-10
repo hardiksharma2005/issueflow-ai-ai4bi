@@ -31,7 +31,7 @@ export function ProjectMembers({
   const available = candidates.filter((c) => !members.some((m) => m.id === c.id));
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {canManage && (
         <div className="flex flex-wrap items-center gap-2">
           <Select value={selected} onValueChange={setSelected} disabled={available.length === 0}>

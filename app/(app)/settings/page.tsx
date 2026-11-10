@@ -29,7 +29,7 @@ export default async function SettingsPage() {
     : { data: [] as AuditLog[] };
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <PageHeader title="Settings" description="Your profile, preferences and workspace configuration." />
 
       <Section title="Profile" action={<RoleBadge role={viewer.profile.role} />}>
@@ -69,7 +69,7 @@ export default async function SettingsPage() {
       </Section>
 
       <Section title="Security" description="How access is enforced in this workspace.">
-        <ul className="grid gap-2 text-sm text-muted-foreground">
+        <ul className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
           {[
             "Row Level Security in Postgres limits every query to projects you belong to.",
             "Roles can only be changed by admins; the database rejects anything else.",

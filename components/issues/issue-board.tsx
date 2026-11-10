@@ -72,7 +72,7 @@ export function IssueBoard({ issues }: { issues: IssueListItem[] }) {
                 {STATUS_LABELS[status]}
                 <span className="ml-auto text-xs text-muted-foreground tabular-nums">{column.length}</span>
               </header>
-              <ul className="grid gap-2">
+              <ul className="grid grid-cols-1 gap-2">
                 {column.map((i) => (
                   <li
                     key={i.id}

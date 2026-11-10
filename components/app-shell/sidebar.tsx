@@ -33,7 +33,7 @@ export function NavLinks({
 }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Main" className="grid gap-0.5">
+    <nav aria-label="Main" className="grid grid-cols-1 gap-0.5">
       {NAV.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         const badge = badges?.[item.href];

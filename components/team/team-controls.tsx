@@ -87,7 +87,7 @@ export function InviteDialog() {
           <DialogDescription>Supabase sends them an email to set a password. Add them to projects after they join.</DialogDescription>
         </DialogHeader>
         <form
-          className="grid gap-4"
+          className="grid grid-cols-1 gap-4"
           action={(form) =>
             start(async () => {
               const res = await inviteUser({ email: form.get("email"), fullName: form.get("fullName"), role });
@@ -99,15 +99,15 @@ export function InviteDialog() {
             })
           }
         >
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-1 gap-1.5">
             <Label htmlFor="invite-name">Full name</Label>
             <Input id="invite-name" name="fullName" maxLength={120} />
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-1 gap-1.5">
             <Label htmlFor="invite-email">Email</Label>
             <Input id="invite-email" name="email" type="email" required />
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-1 gap-1.5">
             <Label>Role</Label>
             <Select value={role} onValueChange={(v) => setRole(v as Role)}>
               <SelectTrigger className="w-40">

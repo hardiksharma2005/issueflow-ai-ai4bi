@@ -133,21 +133,30 @@ export function BreakdownChart({
 
 export function TimelineChart({ data }: { data: { date: string; created: number; resolved: number }[] }) {
   const fmt = (d: string) => format(new Date(`${d}T00:00:00`), "d MMM");
+  // Daily counts are mostly 0 or 1, which reads as noise; running totals (a burn-up chart)
+  // show the trend, and the gap between the lines is the backlog added in the period.
+  const cumulative = data.reduce<{ date: string; created: number; resolved: number }[]>((acc, d) => {
+    const prev = acc.at(-1) ?? { created: 0, resolved: 0 };
+    return [...acc, { date: d.date, created: prev.created + d.created, resolved: prev.resolved + d.resolved }];
+  }, []);
   return (
     <ChartCard
       title="Issues created vs resolved"
-      description="Last 30 days"
-      table={{ columns: ["Date", "Created", "Resolved"], rows: data.map((d) => [d.date, d.created, d.resolved]) }}
+      description="Running total, last 30 days"
+      table={{
+        columns: ["Date", "Created", "Resolved", "Created (total)", "Resolved (total)"],
+        rows: data.map((d, n) => [d.date, d.created, d.resolved, cumulative[n].created, cumulative[n].resolved]),
+      }}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ left: -16, right: 12, top: 8, bottom: 0 }}>
+        <AreaChart data={cumulative} margin={{ left: -16, right: 12, top: 8, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
           <XAxis dataKey="date" tickFormatter={fmt} minTickGap={28} {...axis} />
           <YAxis allowDecimals={false} {...axis} />
           <Tooltip content={<ChartTooltip labelFormat={fmt} />} cursor={{ stroke: "var(--chart-axis)", strokeDasharray: "3 3" }} />
           <Legend iconType="plainline" wrapperStyle={{ fontSize: 12 }} />
-          <Area type="monotone" dataKey="created" name="Created" stroke="var(--series-1)" fill="var(--series-1)" fillOpacity={0.12} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-          <Area type="monotone" dataKey="resolved" name="Resolved" stroke="var(--series-2)" fill="var(--series-2)" fillOpacity={0.08} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          <Area type="linear" dataKey="created" name="Created" stroke="var(--series-1)" fill="var(--series-1)" fillOpacity={0.1} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          <Area type="linear" dataKey="resolved" name="Resolved" stroke="var(--series-2)" fill="var(--series-2)" fillOpacity={0} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
         </AreaChart>
       </ResponsiveContainer>
     </ChartCard>

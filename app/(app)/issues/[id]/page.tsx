@@ -93,7 +93,7 @@ export default async function IssuePage({ params }: PageProps<"/issues/[id]">) {
   const overdue = isOverdue(typed);
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <Breadcrumbs
         items={[
           { label: "Projects", href: "/projects" },
@@ -101,8 +101,8 @@ export default async function IssuePage({ params }: PageProps<"/issues/[id]">) {
           { label: `${project.key}-${issue.number}` },
         ]}
       />
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <div className="grid min-w-0 content-start gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_20rem]">
+        <div className="grid grid-cols-1 min-w-0 content-start gap-6">
           <div className="rounded-xl border bg-card p-5">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs text-muted-foreground">
@@ -169,7 +169,7 @@ export default async function IssuePage({ params }: PageProps<"/issues/[id]">) {
           </Section>
         </div>
 
-        <aside className="grid content-start gap-4">
+        <aside className="grid grid-cols-1 content-start gap-4">
           <section className="rounded-xl border bg-card p-4">
             <IssueProperties issue={typed} members={members} canManage={Boolean(canManage)} canChangeStatus={Boolean(canManage) || isAssignee} />
             {!canManage && (
@@ -177,7 +177,7 @@ export default async function IssuePage({ params }: PageProps<"/issues/[id]">) {
                 {isAssignee ? "As the assignee you can change the status." : "Only managers of this project or the assignee can change this issue."}
               </p>
             )}
-            <dl className="mt-3 grid gap-2 border-t pt-3 text-xs">
+            <dl className="mt-3 grid grid-cols-1 gap-2 border-t pt-3 text-xs">
               <div className="flex justify-between gap-2">
                 <dt className="text-muted-foreground">Reporter</dt>
                 <dd className="truncate">{issue.reporter_name || displayName(creator)}</dd>
@@ -214,7 +214,7 @@ export default async function IssuePage({ params }: PageProps<"/issues/[id]">) {
 
           <section className="rounded-xl border bg-card p-4">
             <h2 className="mb-3 text-sm font-medium">Activity</h2>
-            <ol className="relative grid gap-3 border-l pl-4">
+            <ol className="relative grid grid-cols-1 gap-3 border-l pl-4">
               {(activity ?? []).map((a) => (
                 <li key={a.id} className="relative text-xs">
                   <span className="absolute top-1 -left-[1.3rem] size-2 rounded-full border-2 border-background bg-muted-foreground/50" aria-hidden />

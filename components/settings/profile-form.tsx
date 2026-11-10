@@ -13,7 +13,7 @@ export function ProfileForm({ fullName, email }: { fullName: string; email: stri
   const [pending, start] = useTransition();
   return (
     <form
-      className="grid max-w-md gap-4"
+      className="grid grid-cols-1 max-w-md gap-4"
       action={(form) =>
         start(async () => {
           const res = await updateProfile({ fullName: form.get("fullName") });
@@ -23,11 +23,11 @@ export function ProfileForm({ fullName, email }: { fullName: string; email: stri
         })
       }
     >
-      <div className="grid gap-1.5">
+      <div className="grid grid-cols-1 gap-1.5">
         <Label htmlFor="fullName">Full name</Label>
         <Input id="fullName" name="fullName" defaultValue={fullName} required minLength={2} maxLength={120} />
       </div>
-      <div className="grid gap-1.5">
+      <div className="grid grid-cols-1 gap-1.5">
         <Label htmlFor="email">Email</Label>
         <Input id="email" value={email} disabled />
       </div>

@@ -24,7 +24,7 @@ export default async function MyTasksPage({ searchParams }: PageProps<"/my-tasks
   const overdue = result.issues.filter((i) => isOverdue(i, now)).length;
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <PageHeader
         title="My tasks"
         description={`Issues assigned to you · ${open} unresolved${overdue ? ` · ${overdue} overdue` : ""}`}

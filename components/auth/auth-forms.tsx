@@ -18,7 +18,7 @@ function Field({
   ...props
 }: React.ComponentProps<typeof Input> & { id: string; label: string; error?: string; aside?: React.ReactNode }) {
   return (
-    <div className="grid gap-1.5">
+    <div className="grid grid-cols-1 gap-1.5">
       <div className="flex items-center justify-between">
         <Label htmlFor={id}>{label}</Label>
         {aside}
@@ -57,7 +57,7 @@ const fieldError = (state: ActionResult<unknown> | null, key: string) =>
 export function LoginForm({ next, linkError }: { next?: string; linkError?: boolean }) {
   const [state, action, pending] = useActionState(signIn, null);
   return (
-    <form action={action} className="grid gap-4" noValidate>
+    <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       {linkError && !state && (
         <Alert variant="destructive">
           <CircleAlert aria-hidden />
@@ -91,7 +91,7 @@ export function RegisterForm() {
   const [state, action, pending] = useActionState(signUp, null);
   if (state?.ok) return <FormMessage state={state} />;
   return (
-    <form action={action} className="grid gap-4" noValidate>
+    <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       <FormMessage state={state} />
       <Field id="fullName" label="Full name" autoComplete="name" required error={fieldError(state, "fullName")} />
       <Field id="email" label="Work email" type="email" autoComplete="email" required error={fieldError(state, "email")} />
@@ -115,7 +115,7 @@ export function RegisterForm() {
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState(requestPasswordReset, null);
   return (
-    <form action={action} className="grid gap-4" noValidate>
+    <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       <FormMessage state={state} />
       <Field id="email" label="Email" type="email" autoComplete="email" required error={fieldError(state, "email")} />
       <Button type="submit" disabled={pending} className="h-9">
@@ -128,7 +128,7 @@ export function ForgotPasswordForm() {
 export function ResetPasswordForm() {
   const [state, action, pending] = useActionState(updatePassword, null);
   return (
-    <form action={action} className="grid gap-4" noValidate>
+    <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       <FormMessage state={state} />
       <Field id="password" label="New password" type="password" autoComplete="new-password" required error={fieldError(state, "password")} />
       <Field id="confirm" label="Confirm password" type="password" autoComplete="new-password" required error={fieldError(state, "confirm")} />

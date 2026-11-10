@@ -22,7 +22,7 @@ export default async function NewImportPage({ searchParams }: PageProps<"/import
   }
 
   return (
-    <div className="mx-auto grid max-w-3xl gap-6">
+    <div className="mx-auto grid max-w-3xl grid-cols-1 gap-6">
       <div>
         <Breadcrumbs items={[{ label: "Imports", href: "/imports" }, { label: "New import" }]} />
         <PageHeader title="Import a WhatsApp conversation" description="Upload an exported chat and screenshots. Nothing becomes an issue until a person approves it." />

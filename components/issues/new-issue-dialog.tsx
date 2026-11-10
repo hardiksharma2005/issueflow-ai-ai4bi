@@ -36,7 +36,7 @@ export interface ProjectOption {
 
 function LabeledSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return (
-    <div className="grid gap-1.5">
+    <div className="grid grid-cols-1 gap-1.5">
       <Label>{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full">
@@ -100,7 +100,7 @@ export function NewIssueDialog({ projects, defaultProjectId, trigger }: { projec
         {projects.length === 0 ? (
           <p className="text-sm text-muted-foreground">You need to manage at least one project to create issues.</p>
         ) : (
-          <form action={submit} className="grid gap-4">
+          <form action={submit} className="grid grid-cols-1 gap-4">
             <LabeledSelect
               label="Project"
               value={projectId}
@@ -110,27 +110,27 @@ export function NewIssueDialog({ projects, defaultProjectId, trigger }: { projec
               }}
               options={projects.map((p) => ({ value: p.id, label: `${p.key} · ${p.name}` }))}
             />
-            <div className="grid gap-1.5">
+            <div className="grid grid-cols-1 gap-1.5">
               <Label htmlFor="title">Title</Label>
               <Input id="title" name="title" required maxLength={200} aria-invalid={Boolean(errors.title)} />
               {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid grid-cols-1 gap-1.5">
               <Label htmlFor="description">Description</Label>
               <Textarea id="description" name="description" rows={4} maxLength={20000} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <LabeledSelect label="Category" value={category} onChange={setCategory} options={ISSUE_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))} />
               <LabeledSelect label="Priority" value={priority} onChange={setPriority} options={ISSUE_PRIORITIES.map((p) => ({ value: p, label: PRIORITY_LABELS[p] }))} />
               <LabeledSelect label="Status" value={status} onChange={setStatus} options={ISSUE_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] }))} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <LabeledSelect label="Assignee" value={assignee} onChange={setAssignee} options={[{ value: "none", label: "Unassigned" }, ...members.map((m) => ({ value: m.id, label: m.name }))]} />
-              <div className="grid gap-1.5">
+              <div className="grid grid-cols-1 gap-1.5">
                 <Label htmlFor="dueDate">Due date</Label>
                 <Input id="dueDate" name="dueDate" type="date" />
               </div>
-              <div className="grid gap-1.5">
+              <div className="grid grid-cols-1 gap-1.5">
                 <Label htmlFor="reporterName">Reported by</Label>
                 <Input id="reporterName" name="reporterName" placeholder="Optional" maxLength={120} />
               </div>

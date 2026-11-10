@@ -66,9 +66,9 @@ export function ProjectFormDialog({ project, trigger }: { project?: Project; tri
           <DialogTitle>{project ? "Edit project" : "New project"}</DialogTitle>
           <DialogDescription>Projects keep issues, imports and members isolated from each other.</DialogDescription>
         </DialogHeader>
-        <form action={submit} className="grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
-            <div className="grid gap-1.5">
+        <form action={submit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_8rem]">
+            <div className="grid grid-cols-1 gap-1.5">
               <Label htmlFor="name">Project name</Label>
               <Input
                 id="name"
@@ -83,7 +83,7 @@ export function ProjectFormDialog({ project, trigger }: { project?: Project; tri
               />
               {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid grid-cols-1 gap-1.5">
               <Label htmlFor="key">Key</Label>
               <Input
                 id="key"
@@ -103,15 +103,15 @@ export function ProjectFormDialog({ project, trigger }: { project?: Project; tri
               </p>
             </div>
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-1 gap-1.5">
             <Label htmlFor="clientName">Client or organisation</Label>
             <Input id="clientName" name="clientName" defaultValue={project?.client_name ?? ""} maxLength={120} />
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-1 gap-1.5">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" defaultValue={project?.description ?? ""} rows={3} maxLength={5000} />
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid grid-cols-1 gap-1.5">
             <Label>Status</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as ProjectStatus)}>
               <SelectTrigger className="w-48">

@@ -29,7 +29,7 @@ export default async function ImportsPage({ searchParams }: PageProps<"/imports"
   const { data: imports } = await query.returns<Row[]>();
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <PageHeader
         title="Imports"
         description="WhatsApp conversations and screenshots processed into issue drafts."

@@ -57,7 +57,7 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
   const tabHref = (t: string) => `/projects/${id}${t === "issues" ? "" : `?tab=${t}`}`;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <div>
         <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: project.name }]} />
         <PageHeader
@@ -153,7 +153,7 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
       </nav>
 
       {tab === "issues" && (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <IssueFilters showProject={false} people={projectOption.members.map((m) => ({ value: m.id, label: m.name }))} />
           {list.issues.length === 0 ? (
             <EmptyState icon={ListTodo} title="No issues here yet" description="Create an issue or import a WhatsApp conversation into this project." />

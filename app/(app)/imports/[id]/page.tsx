@@ -60,7 +60,7 @@ export default async function ImportPage({ params }: PageProps<"/imports/[id]">)
   const pendingCount = (drafts ?? []).filter((d) => d.status === "pending").length;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <div>
         <Breadcrumbs items={[{ label: "Imports", href: "/imports" }, { label: record.file_names[0] ?? "Import" }]} />
         <PageHeader
@@ -163,7 +163,7 @@ export default async function ImportPage({ params }: PageProps<"/imports/[id]">)
         </Section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_20rem]">
         <Section title="Step 6 · Conversation preview" description="Original messages exactly as extracted. System messages are shown but ignored by the AI.">
           {msgs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No chat messages in this import.</p>
@@ -177,7 +177,7 @@ export default async function ImportPage({ params }: PageProps<"/imports/[id]">)
           {allFiles.length === 0 ? (
             <p className="text-sm text-muted-foreground">No media files.</p>
           ) : (
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-1 gap-2">
               {allFiles.map((a) => {
                 const linked = a.source_message_id ? msgById.get(a.source_message_id) : null;
                 const url = urlFor.get(a.storage_path);

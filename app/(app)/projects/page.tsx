@@ -38,7 +38,7 @@ export default async function ProjectsPage() {
   const isAdmin = viewer.profile.role === "admin";
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <PageHeader
         title="Projects"
         description={isAdmin ? "All projects in the workspace." : "Projects you are a member of."}
@@ -61,7 +61,7 @@ export default async function ProjectsPage() {
           description={isAdmin ? "Create a project to start tracking issues." : "Ask an admin or manager to add you to a project."}
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {projects.map((p) => {
             const s = stats.get(p.id) ?? { total: 0, open: 0, members: 0 };
             const done = s.total ? Math.round(((s.total - s.open) / s.total) * 100) : 0;
@@ -83,7 +83,7 @@ export default async function ProjectsPage() {
                   <ProjectStatusBadge status={p.status} />
                 </div>
                 <p className="mt-3 line-clamp-2 min-h-10 text-sm text-muted-foreground">{p.description || "No description."}</p>
-                <div className="mt-4 grid gap-1.5">
+                <div className="mt-4 grid grid-cols-1 gap-1.5">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
                       {s.open} open · {s.total} total

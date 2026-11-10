@@ -26,7 +26,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   const numeric = table.rows[0]?.map((v) => typeof v === "number") ?? [];
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <PageHeader
         title="Reports"
         description="Generated live from the issues you can access. Export any report as CSV."

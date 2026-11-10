@@ -91,7 +91,10 @@ async function collectFiles(supabase: SupabaseClient, imp: ImportRecord) {
       media.push({ name: obj.name, bytes, mime: check.info.mime, kind: check.info.kind });
     }
   }
-  return { chats, media, warnings, fileNames: objects.map((o) => o.name) };
+  // Chat exports first: the first name is used as the import's title.
+  const isChat = (n: string) => /\.(txt|zip)$/i.test(n);
+  const fileNames = objects.map((o) => o.name).sort((a, b) => Number(isChat(b)) - Number(isChat(a)));
+  return { chats, media, warnings, fileNames };
 }
 
 async function unzip(bytes: Uint8Array, warnings: string[]) {

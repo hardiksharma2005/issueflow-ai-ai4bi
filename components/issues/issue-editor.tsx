@@ -37,7 +37,7 @@ export function IssueEditor({ id, title, description, canEdit }: { id: string; t
 
   return (
     <form
-      className="grid gap-3"
+      className="grid grid-cols-1 gap-3"
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {

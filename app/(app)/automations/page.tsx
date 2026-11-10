@@ -63,7 +63,7 @@ export default async function AutomationsPage() {
   const cronConfigured = Boolean(process.env.CRON_SECRET);
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <PageHeader title="Automations" description="Scheduled jobs that watch for overdue, stale and failed work. Schedules run in UTC via Vercel Cron." />
       <Alert>
         <Info aria-hidden />
@@ -76,7 +76,7 @@ export default async function AutomationsPage() {
       </Alert>
       {!isAdmin && <p className="text-sm text-muted-foreground">Only admins can run automations and view their reports.</p>}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {(jobs ?? []).map((job) => {
           const jobLogs = (logs ?? []).filter((l) => l.job_id === job.id);
           const next = job.enabled ? nextRun(job.schedule) : null;
@@ -131,7 +131,7 @@ export default async function AutomationsPage() {
                   {jobLogs.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No runs yet.</p>
                   ) : (
-                    <ul className="grid gap-2">
+                    <ul className="grid grid-cols-1 gap-2">
                       {jobLogs.slice(0, 5).map((log) => (
                         <li key={log.id} className="text-xs">
                           <div className="flex items-center gap-2">

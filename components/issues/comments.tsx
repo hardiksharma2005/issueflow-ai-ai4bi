@@ -24,9 +24,9 @@ export function Comments({ issueId, comments, viewerId, canModerate }: { issueId
   const ref = useRef<HTMLTextAreaElement>(null);
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet. Start the discussion below.</p>}
-      <ul className="grid gap-4">
+      <ul className="grid grid-cols-1 gap-4">
         {comments.map((c) => (
           <li key={c.id} className="flex gap-3">
             <UserAvatar name={c.authorName} size="sm" className="mt-0.5" />
@@ -55,7 +55,7 @@ export function Comments({ issueId, comments, viewerId, canModerate }: { issueId
         ))}
       </ul>
       <form
-        className="grid gap-2"
+        className="grid grid-cols-1 gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           const body = ref.current?.value ?? "";

@@ -33,13 +33,13 @@ export default async function TeamPage() {
   const openFor = (id: string) => (issues ?? []).filter((i) => i.assignee_id === id && isUnresolved(i.status as IssueStatus)).length;
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <PageHeader
         title="Team members"
         description={isAdmin ? "Manage who has access and what they can do." : "People who share projects with you."}
         actions={isAdmin && <InviteDialog />}
       />
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {ROLE_HELP.map((r) => (
           <div key={r.role} className="rounded-xl border bg-card p-3 text-xs text-muted-foreground">
             <RoleBadge role={r.role} />
