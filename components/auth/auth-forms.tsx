@@ -54,8 +54,26 @@ function FormMessage({ state }: { state: ActionResult<unknown> | null }) {
 const fieldError = (state: ActionResult<unknown> | null, key: string) =>
   state && !state.ok ? state.fieldErrors?.[key] : undefined;
 
+type AuthAction<T> = (prev: unknown, form: FormData) => Promise<ActionResult<T>>;
+
+/**
+ * useActionState that also returns the submitted values of `keep` fields. React resets
+ * a <form action> after every submission; using these as defaultValue means a validation
+ * error does not wipe what the user typed. Passwords are never kept.
+ */
+function useAuthAction<T>(fn: AuthAction<T>, keep: string[]) {
+  const [{ result, values }, action, pending] = useActionState(
+    async (_: unknown, form: FormData) => ({
+      result: await fn(null, form),
+      values: Object.fromEntries(keep.map((k) => [k, String(form.get(k) ?? "")])) as Record<string, string>,
+    }),
+    { result: null as ActionResult<T> | null, values: {} as Record<string, string> },
+  );
+  return [result, action, pending, values] as const;
+}
+
 export function LoginForm({ next, linkError }: { next?: string; linkError?: boolean }) {
-  const [state, action, pending] = useActionState(signIn, null);
+  const [state, action, pending, values] = useAuthAction(signIn, ["email"]);
   return (
     <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       {linkError && !state && (
@@ -66,7 +84,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
       )}
       <FormMessage state={state} />
       <input type="hidden" name="next" value={next ?? ""} />
-      <Field id="email" label="Email" type="email" autoComplete="email" required error={fieldError(state, "email")} />
+      <Field id="email" label="Email" type="email" autoComplete="email" required defaultValue={values.email} error={fieldError(state, "email")} />
       <Field
         id="password"
         label="Password"
@@ -88,13 +106,13 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
 }
 
 export function RegisterForm() {
-  const [state, action, pending] = useActionState(signUp, null);
+  const [state, action, pending, values] = useAuthAction(signUp, ["fullName", "email"]);
   if (state?.ok) return <FormMessage state={state} />;
   return (
     <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       <FormMessage state={state} />
-      <Field id="fullName" label="Full name" autoComplete="name" required error={fieldError(state, "fullName")} />
-      <Field id="email" label="Work email" type="email" autoComplete="email" required error={fieldError(state, "email")} />
+      <Field id="fullName" label="Full name" autoComplete="name" required defaultValue={values.fullName} error={fieldError(state, "fullName")} />
+      <Field id="email" label="Work email" type="email" autoComplete="email" required defaultValue={values.email} error={fieldError(state, "email")} />
       <Field
         id="password"
         label="Password"
@@ -113,11 +131,11 @@ export function RegisterForm() {
 }
 
 export function ForgotPasswordForm() {
-  const [state, action, pending] = useActionState(requestPasswordReset, null);
+  const [state, action, pending, values] = useAuthAction(requestPasswordReset, ["email"]);
   return (
     <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       <FormMessage state={state} />
-      <Field id="email" label="Email" type="email" autoComplete="email" required error={fieldError(state, "email")} />
+      <Field id="email" label="Email" type="email" autoComplete="email" required defaultValue={values.email} error={fieldError(state, "email")} />
       <Button type="submit" disabled={pending} className="h-9">
         {pending ? "Sending…" : "Send reset link"}
       </Button>
@@ -126,7 +144,7 @@ export function ForgotPasswordForm() {
 }
 
 export function ResetPasswordForm() {
-  const [state, action, pending] = useActionState(updatePassword, null);
+  const [state, action, pending] = useAuthAction(updatePassword, []);
   return (
     <form action={action} className="grid grid-cols-1 gap-4" noValidate>
       <FormMessage state={state} />

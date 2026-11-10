@@ -66,7 +66,13 @@ export function ProjectFormDialog({ project, trigger }: { project?: Project; tri
           <DialogTitle>{project ? "Edit project" : "New project"}</DialogTitle>
           <DialogDescription>Projects keep issues, imports and members isolated from each other.</DialogDescription>
         </DialogHeader>
-        <form action={submit} className="grid grid-cols-1 gap-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit(new FormData(e.currentTarget));
+          }}
+          className="grid grid-cols-1 gap-4"
+        >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_8rem]">
             <div className="grid grid-cols-1 gap-1.5">
               <Label htmlFor="name">Project name</Label>

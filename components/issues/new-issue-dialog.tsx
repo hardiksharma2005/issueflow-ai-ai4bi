@@ -100,7 +100,13 @@ export function NewIssueDialog({ projects, defaultProjectId, trigger }: { projec
         {projects.length === 0 ? (
           <p className="text-sm text-muted-foreground">You need to manage at least one project to create issues.</p>
         ) : (
-          <form action={submit} className="grid grid-cols-1 gap-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit(new FormData(e.currentTarget));
+            }}
+            className="grid grid-cols-1 gap-4"
+          >
             <LabeledSelect
               label="Project"
               value={projectId}
