@@ -22,28 +22,32 @@ if (!url) {
 const sql = postgres(url, { max: 1, ssl: "require", onnotice: () => {} });
 const dir = path.resolve("database/migrations");
 
-try {
-  await sql`create table if not exists public._migrations (name text primary key, applied_at timestamptz not null default now())`;
-  await sql`alter table public._migrations enable row level security`; // not exposed through the API
-  const applied = new Set((await sql<{ name: string }[]>`select name from public._migrations`).map((r) => r.name));
-  const files = (await readdir(dir)).filter((f) => f.endsWith(".sql")).sort();
+async function main() {
+  try {
+    await sql`create table if not exists public._migrations (name text primary key, applied_at timestamptz not null default now())`;
+    await sql`alter table public._migrations enable row level security`; // not exposed through the API
+    const applied = new Set((await sql<{ name: string }[]>`select name from public._migrations`).map((r) => r.name));
+    const files = (await readdir(dir)).filter((f) => f.endsWith(".sql")).sort();
 
-  for (const file of files) {
-    if (applied.has(file)) {
-      console.log(`  skip  ${file}`);
-      continue;
+    for (const file of files) {
+      if (applied.has(file)) {
+        console.log(`  skip  ${file}`);
+        continue;
+      }
+      const body = await readFile(path.join(dir, file), "utf8");
+      await sql.begin(async (tx) => {
+        await tx.unsafe(body);
+        await tx`insert into public._migrations (name) values (${file})`;
+      });
+      console.log(`  apply ${file}`);
     }
-    const body = await readFile(path.join(dir, file), "utf8");
-    await sql.begin(async (tx) => {
-      await tx.unsafe(body);
-      await tx`insert into public._migrations (name) values (${file})`;
-    });
-    console.log(`  apply ${file}`);
+    console.log("Migrations complete.");
+  } catch (err) {
+    console.error("Migration failed:", (err as Error).message);
+    process.exitCode = 1;
+  } finally {
+    await sql.end();
   }
-  console.log("Migrations complete.");
-} catch (err) {
-  console.error("Migration failed:", (err as Error).message);
-  process.exitCode = 1;
-} finally {
-  await sql.end();
 }
+
+void main();

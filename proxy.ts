@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { normalizeSupabaseUrl } from "@/lib/env";
 
 // Runs before every page request: refreshes the Supabase session cookie and keeps
 // signed-out users out of the application. (Authorization is still enforced again
@@ -21,7 +22,7 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  const supabase = createServerClient(url, key, {
+  const supabase = createServerClient(normalizeSupabaseUrl(url), key, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

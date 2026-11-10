@@ -10,6 +10,7 @@
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { parseWhatsAppChat } from "../../lib/whatsapp/parser";
+import { normalizeSupabaseUrl } from "../../lib/env";
 
 config({ path: ".env.local" });
 config();
@@ -20,7 +21,7 @@ const password = process.env.DEMO_PASSWORD;
 if (!url || !serviceKey) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
 if (!password || password.length < 8) throw new Error("Set DEMO_PASSWORD (min 8 characters) in .env.local");
 
-const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+const db = createClient(normalizeSupabaseUrl(url), serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 const reset = process.argv.includes("--reset");
 
 const DAY = 86_400_000;
@@ -31,6 +32,11 @@ const dateIn = (days: number) => new Date(NOW + days * DAY).toISOString().slice(
 function must<R extends { data: unknown; error: { message: string } | null }>(res: R, what: string): NonNullable<R["data"]> {
   if (res.error || res.data == null) throw new Error(`${what}: ${res.error?.message ?? "no data returned"}`);
   return res.data as NonNullable<R["data"]>;
+}
+
+/** For writes that return no rows: fail loudly on error only. */
+function check(res: { error: { message: string } | null }, what: string) {
+  if (res.error) throw new Error(`${what}: ${res.error.message}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -58,7 +64,7 @@ async function ensureUsers() {
     }
     ids[u.key] = user.id;
     // Service role has no auth.uid(), so the role-protection trigger allows this.
-    must(await db.from("profiles").update({ full_name: u.name, role: u.role }).eq("id", user.id), `profile ${u.email}`);
+    must(await db.from("profiles").update({ full_name: u.name, role: u.role }).eq("id", user.id).select("id").single(), `profile ${u.email}`);
   }
   return ids;
 }
@@ -149,7 +155,7 @@ const PAST_CHAT = `27/10/2026, 08:40 - Vikram Rao: Morning. Water is leaking fro
 
 async function main() {
   if (reset) {
-    must(await db.from("projects").delete().eq("is_demo", true), "remove demo projects");
+    must(await db.from("projects").delete().eq("is_demo", true).select("id"), "remove demo projects");
     console.log("Removed existing demo projects.");
   }
   const { count } = await db.from("projects").select("id", { count: "exact", head: true }).eq("is_demo", true);
@@ -170,7 +176,7 @@ async function main() {
         .single(),
       `project ${p.key}`,
     );
-    must(
+    check(
       await db.from("project_members").upsert(p.members.map((m) => ({ project_id: project.id, user_id: users[m], added_by: users.admin }))),
       `members ${p.key}`,
     );
@@ -200,9 +206,9 @@ async function main() {
         `issue ${i.title}`,
       );
       // Align the generated "created" activity with the backdated issue.
-      await db.from("issue_activity").update({ created_at: created, actor_id: users.manager }).eq("issue_id", issue.id);
+      check(await db.from("issue_activity").update({ created_at: created, actor_id: users.manager }).eq("issue_id", issue.id), "backdate activity");
       for (const [n, [who, body]] of (i.comments ?? []).entries()) {
-        must(
+        check(
           await db.from("comments").insert({ issue_id: issue.id, author_id: users[who], body, created_at: ago(Math.max(0, i.createdDaysAgo - 1 - n), 14) }),
           "comment",
         );
@@ -266,9 +272,9 @@ async function seedPastImport(users: Record<UserKey, string>) {
   const link = async (title: string, seqs: number[]) => {
     const { data: issue } = await db.from("issues").select("id").eq("project_id", project.id).eq("title", title).single();
     if (!issue) return;
-    await db.from("issues").update({ source: "whatsapp_import", import_id: imp.id }).eq("id", issue.id);
-    await db.from("issue_source_messages").insert(seqs.map((s) => ({ issue_id: issue.id, source_message_id: bySeq.get(s)! })));
-    await db.from("issue_drafts").insert({
+    check(await db.from("issues").update({ source: "whatsapp_import", import_id: imp.id }).eq("id", issue.id), "link issue");
+    check(await db.from("issue_source_messages").insert(seqs.map((s) => ({ issue_id: issue.id, source_message_id: bySeq.get(s)! }))), "link messages");
+    check(await db.from("issue_drafts").insert({
       import_id: imp.id,
       project_id: project.id,
       title,
@@ -286,7 +292,7 @@ async function seedPastImport(users: Record<UserKey, string>) {
       is_simulated: true,
       reviewed_by: users.manager,
       reviewed_at: ago(14, 10),
-    });
+    }), "approved draft");
   };
   await link("Water leaking from AC unit in meeting room 2B", [1, 2, 3, 4]);
   await link("Flickering lights in open-plan area", [5, 6]);

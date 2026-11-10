@@ -3,7 +3,16 @@
 export function supabaseUrl() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!url) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set. Copy .env.example to .env.local.");
-  return url;
+  return normalizeSupabaseUrl(url);
+}
+
+/** Tolerates a pasted REST endpoint ("https://x.supabase.co/rest/v1/"): the clients need the bare origin. */
+export function normalizeSupabaseUrl(url: string) {
+  try {
+    return new URL(url.trim()).origin;
+  } catch {
+    return url;
+  }
 }
 
 /** Accepts either the legacy anon key or the newer publishable key. */
