@@ -43,7 +43,7 @@ function check(res: { error: { message: string } | null }, what: string) {
 // ---------------------------------------------------------------------------
 const USERS = [
   { key: "admin", email: "admin@issueflow.example", name: "Asha Verma", role: "admin" },
-  { key: "manager", email: "manager@issueflow.example", name: "Rohan Kapoor", role: "manager" },
+  { key: "manager", email: "manager@issueflow.example", name: "AI4BI Admin", role: "manager" },
   { key: "member", email: "member@issueflow.example", name: "Neha Singh", role: "member" },
   { key: "daniel", email: "daniel@issueflow.example", name: "Daniel Okafor", role: "member" },
   { key: "sara", email: "sara@issueflow.example", name: "Sara Lim", role: "member" },
@@ -149,10 +149,10 @@ const PROJECTS: {
 // A small past import (already processed and reviewed) for the Riverside project.
 const PAST_CHAT = `27/10/2026, 08:40 - Vikram Rao: Morning. Water is leaking from the AC unit in meeting room 2B again, there's a stain on the ceiling
 27/10/2026, 08:41 - Vikram Rao: IMG-20261027-WA0001.jpg (file attached)
-27/10/2026, 08:55 - Rohan Kapoor: Thanks Vikram, Neha can you check with the HVAC contractor?
+27/10/2026, 08:55 - AI4BI Admin: Thanks Vikram, Neha can you check with the HVAC contractor?
 27/10/2026, 09:02 - Neha Singh: Calling them now
 27/10/2026, 15:20 - Kavita Nair: Also the lights near the windows in the open-plan area keep flickering
-27/10/2026, 15:22 - Rohan Kapoor: Noted, will add to the snag list`;
+27/10/2026, 15:22 - AI4BI Admin: Noted, will add to the snag list`;
 
 /** Every object path under a storage prefix (list() is one level deep; folders have no id). */
 async function listFiles(prefix: string): Promise<string[]> {
