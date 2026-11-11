@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { UNRESOLVED_STATUSES, type IssueStatus } from "@/lib/domain";
 import type { AutomationJob } from "@/types/db";
+import { calendarDate } from "@/lib/format";
 
 // Scheduled jobs run with the service role (no user session) after the caller has been
 // authorised by CRON_SECRET (Vercel Cron) or an admin session ("Run now"). They only READ
@@ -46,7 +47,7 @@ const assigneeName = (i: IssueRow) => i.assignee?.full_name || i.assignee?.email
 const key = (i: IssueRow) => `${i.project?.key ?? "?"}-${i.number}`;
 
 async function dailyOverdue(db: SupabaseClient, now: Date): Promise<JobOutput> {
-  const today = now.toISOString().slice(0, 10);
+  const today = calendarDate(now);
   const { data, error } = await db
     .from("issues")
     .select(ISSUE_SELECT)

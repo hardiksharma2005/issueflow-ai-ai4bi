@@ -10,6 +10,7 @@ import {
   type IssuePriority,
   type IssueStatus,
 } from "@/lib/domain";
+import { calendarDate } from "@/lib/format";
 
 export interface AnalyticsIssue {
   id: string;
@@ -27,7 +28,7 @@ export interface AnalyticsIssue {
 }
 
 export const isOverdue = (i: Pick<AnalyticsIssue, "due_date" | "status">, now = new Date()) =>
-  Boolean(i.due_date && isUnresolved(i.status) && i.due_date < now.toISOString().slice(0, 10));
+  Boolean(i.due_date && isUnresolved(i.status) && i.due_date < calendarDate(now));
 
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -70,15 +71,15 @@ export function computeDashboard(issues: AnalyticsIssue[], now = new Date(), day
   const timeline: { date: string; created: number; resolved: number }[] = [];
   const index = new Map<string, number>();
   for (let d = days - 1; d >= 0; d--) {
-    const date = dayKey(new Date(now.getTime() - d * 86_400_000));
+    const date = calendarDate(new Date(now.getTime() - d * 86_400_000));
     index.set(date, timeline.length);
     timeline.push({ date, created: 0, resolved: 0 });
   }
   for (const i of issues) {
-    const c = index.get(i.created_at.slice(0, 10));
+    const c = index.get(calendarDate(i.created_at));
     if (c !== undefined) timeline[c].created++;
     if (i.resolved_at) {
-      const r = index.get(i.resolved_at.slice(0, 10));
+      const r = index.get(calendarDate(i.resolved_at));
       if (r !== undefined) timeline[r].resolved++;
     }
   }

@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/format";
 import { Table2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -132,7 +132,7 @@ export function BreakdownChart({
 }
 
 export function TimelineChart({ data }: { data: { date: string; created: number; resolved: number }[] }) {
-  const fmt = (d: string) => format(new Date(`${d}T00:00:00`), "d MMM");
+  const fmt = (d: string) => formatDate(d, "d MMM");
   // Daily counts are mostly 0 or 1, which reads as noise; running totals (a burn-up chart)
   // show the trend, and the gap between the lines is the backlog added in the period.
   const cumulative = data.reduce<{ date: string; created: number; resolved: number }[]>((acc, d) => {
@@ -164,7 +164,7 @@ export function TimelineChart({ data }: { data: { date: string; created: number;
 }
 
 export function ResolutionChart({ data }: { data: { week: string; resolved: number; avgDays: number | null }[] }) {
-  const fmt = (d: string) => `w/c ${format(new Date(`${d}T00:00:00`), "d MMM")}`;
+  const fmt = (d: string) => `w/c ${formatDate(d, "d MMM")}`;
   return (
     <ChartCard
       title="Resolution trend"
@@ -174,7 +174,7 @@ export function ResolutionChart({ data }: { data: { week: string; resolved: numb
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ left: -16, right: 12, top: 8, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
-          <XAxis dataKey="week" tickFormatter={(d) => format(new Date(`${d}T00:00:00`), "d MMM")} {...axis} />
+          <XAxis dataKey="week" tickFormatter={(d) => formatDate(d, "d MMM")} {...axis} />
           <YAxis allowDecimals={false} {...axis} />
           <Tooltip
             cursor={{ fill: "var(--muted)", opacity: 0.6 }}

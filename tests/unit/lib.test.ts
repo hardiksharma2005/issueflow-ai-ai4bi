@@ -5,6 +5,7 @@ import { buildReport, toCsv, type ReportIssue } from "@/lib/reports";
 import { checkFile, sanitizeFileName, sniffMatches, typeFromName } from "@/lib/validation/files";
 import { matchMedia, timestampFromFileName } from "@/lib/whatsapp/media";
 import { safeRedirectPath } from "@/lib/redirect";
+import { APP_TIMEZONE, calendarDate, formatDate, formatDateTime } from "@/lib/format";
 import { issueFiltersSchema, issueUpdateSchema, projectSchema, signUpSchema } from "@/lib/validation/schemas";
 
 const NOW = new Date("2026-11-10T12:00:00Z");
@@ -170,5 +171,22 @@ describe("safe redirects", () => {
     for (const next of ["//evil.com", "/\\evil.com", "/\t/evil.com", "/\n/evil.com", "https://evil.com", "evil.com", "", null, undefined]) {
       expect(safeRedirectPath(next)).toBe("/dashboard");
     }
+  });
+});
+
+describe("date formatting (app time zone)", () => {
+  it("shows timestamps in the app time zone regardless of the server's zone", () => {
+    expect(APP_TIMEZONE).toBe("Asia/Kolkata");
+    expect(formatDateTime("2026-11-03T03:47:00Z")).toBe("3 Nov 2026, 09:17");
+    expect(formatDate("2026-11-03T20:00:00Z")).toBe("4 Nov 2026"); // 01:30 next day in IST
+  });
+  it("never shifts date-only values", () => {
+    expect(formatDate("2026-11-11", "d MMM")).toBe("11 Nov");
+    expect(formatDate("2026-01-01")).toBe("1 Jan 2026");
+  });
+  it("uses the app time zone for 'today' and overdue checks", () => {
+    const justAfterMidnightIst = new Date("2026-11-10T18:45:00Z"); // 00:15 on 11 Nov in IST
+    expect(calendarDate(justAfterMidnightIst)).toBe("2026-11-11");
+    expect(isOverdue({ due_date: "2026-11-10", status: "open" }, justAfterMidnightIst)).toBe(true);
   });
 });

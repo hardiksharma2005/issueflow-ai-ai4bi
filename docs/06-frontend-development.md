@@ -52,6 +52,7 @@ components/
   - `--status-open|progress|blocked|review|resolved|closed`, `--priority-critical|high|medium|low` — used by badges, always paired with an icon and label (never colour alone).
   - `--series-1` (#2a78d6 light / #3987e5 dark) and `--series-2` (#eb6834 / #d95926) for charts, `--chart-grid`, `--chart-axis`.
 - **Fonts:** Geist Sans for UI, Geist Mono for issue keys and IDs (`next/font`).
+- **Dates:** `lib/format.ts` formats with `Intl` in one display time zone (`NEXT_PUBLIC_APP_TIMEZONE`, default `Asia/Kolkata`) on both server and browser, so server-rendered text matches after hydration (Vercel servers run in UTC). Date-only values (due dates) are never shifted; "today" and overdue use `calendarDate()` in the same zone.
 - **Dark mode** via `next-themes` (light / dark / system), toggled in the top bar and Settings.
 - **Layout:** single-column grids use `grid-cols-1` (`minmax(0, 1fr)`) so long content (select values, file names, charts) cannot widen the page. Pages are verified to have no horizontal scroll at 390 px and 1440 px.
 

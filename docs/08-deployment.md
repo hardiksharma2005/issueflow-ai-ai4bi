@@ -57,6 +57,7 @@ git log -p | grep -iE "sb_secret_|service_role|xai-" || echo "clean"
    | `SUPABASE_SERVICE_ROLE_KEY` | as in `.env.local` — mark **Sensitive** |
    | `NEXT_PUBLIC_SITE_URL` | `https://<project>.vercel.app` (or your domain) |
    | `CRON_SECRET` | a new random string — mark **Sensitive** |
+   | `NEXT_PUBLIC_APP_TIMEZONE` | optional; IANA time zone for displayed dates, default `Asia/Kolkata` |
    | `AI_PROVIDER` | `mock`, `groq` or `grok` |
    | `GROQ_API_KEY`, `GROQ_MODEL` | only with `AI_PROVIDER=groq` — mark the key **Sensitive** |
    | `XAI_API_KEY`, `XAI_MODEL` | only with `AI_PROVIDER=grok` — mark the key **Sensitive** |
@@ -73,6 +74,10 @@ vercel link
 vercel env add SUPABASE_SERVICE_ROLE_KEY production   # repeat for each variable
 vercel deploy --prod
 ```
+
+### Function region
+
+`vercel.json` sets `"regions": ["syd1"]` so functions run next to the Supabase database (ap-southeast-2). With Vercel's default (`iad1`, Washington) every query crossed the Pacific: pages took 1.5–2.4 s; in `syd1` they take 0.55–1 s from India. **If your Supabase project is in another region, change this** to the nearest Vercel region (e.g. `bom1` for ap-south-1, `fra1` for eu-central-1, `iad1` for us-east-1). Check the `x-vercel-id` response header: `bom1::syd1::…` means edge in Mumbai, function in Sydney.
 
 ### Function limits
 

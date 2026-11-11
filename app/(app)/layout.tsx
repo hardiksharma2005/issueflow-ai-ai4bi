@@ -3,12 +3,12 @@ import { Topbar, type Notification } from "@/components/app-shell/topbar";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { UNRESOLVED_STATUSES } from "@/lib/domain";
-import { daysAgoIso } from "@/lib/format";
+import { calendarDate, daysAgoIso } from "@/lib/format";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const viewer = await requireViewer();
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = calendarDate();
   const isManager = viewer.profile.role !== "member";
 
   const [myOpen, overdue, review, failed] = await Promise.all([

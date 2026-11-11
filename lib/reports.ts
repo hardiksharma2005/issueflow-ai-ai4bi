@@ -11,6 +11,7 @@ import {
   type IssueStatus,
 } from "@/lib/domain";
 import { isOverdue } from "@/lib/analytics";
+import { calendarDate } from "@/lib/format";
 
 export const REPORTS = {
   "open-issues": { title: "Open issues", description: "Every unresolved issue, most urgent first." },
@@ -50,7 +51,7 @@ const daysBetween = (a: string, b: string) =>
   Math.round(((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000) * 10) / 10;
 
 export function buildReport(id: ReportId, issues: ReportIssue[], now = new Date()): ReportTable {
-  const today = now.toISOString().slice(0, 10);
+  const today = calendarDate(now);
   switch (id) {
     case "open-issues": {
       const list = issues
@@ -67,7 +68,7 @@ export function buildReport(id: ReportId, issues: ReportIssue[], now = new Date(
           CATEGORY_LABELS[i.category],
           person(i),
           i.due_date,
-          i.created_at.slice(0, 10),
+          calendarDate(i.created_at),
         ]),
         summary: `${list.length} open issue(s)`,
       };
@@ -140,8 +141,8 @@ export function buildReport(id: ReportId, issues: ReportIssue[], now = new Date(
           i.project?.name ?? "",
           PRIORITY_LABELS[i.priority],
           person(i),
-          i.created_at.slice(0, 10),
-          i.resolved_at!.slice(0, 10),
+          calendarDate(i.created_at),
+          calendarDate(i.resolved_at!),
           daysBetween(i.created_at, i.resolved_at!),
         ]),
         summary: `${list.length} resolved issue(s), average ${Math.round(avg * 10) / 10} days to resolve`,

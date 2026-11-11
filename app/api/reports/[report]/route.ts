@@ -4,6 +4,7 @@ import { AuthError, assertViewer } from "@/lib/auth";
 import { fetchIssuesForReports } from "@/lib/queries";
 import { buildReport, isReportId, toCsv } from "@/lib/reports";
 import { createClient } from "@/lib/supabase/server";
+import { calendarDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/reports/[rep
       p_action: "report.export",
       p_details: { report, project_id: project ?? null, rows: csv.split("\r\n").length - 2 },
     });
-    const date = new Date().toISOString().slice(0, 10);
+    const date = calendarDate();
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
