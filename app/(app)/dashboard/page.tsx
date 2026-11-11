@@ -33,7 +33,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const now = new Date();
   const d = computeDashboard(issues as never, now);
 
-  const firstName = (viewer.profile.full_name || viewer.email).split(" ")[0];
+  const name = viewer.profile.full_name || viewer.email;
   const urgent = issues
     .filter((i) => (i.priority === "critical" || isOverdue(i, now)) && !["resolved", "closed"].includes(i.status))
     .slice(0, 6);
@@ -54,7 +54,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <div className="rounded-lg border bg-muted/40 px-4 py-2 text-sm">Your password has been updated.</div>
       )}
       <PageHeader
-        title={`Good to see you, ${firstName}`}
+        title={`Good to see you, ${name}`}
         description="Live numbers from every project you can access."
         actions={<ProjectFilter projects={projects ?? []} />}
       />
