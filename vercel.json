@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["syd1"],
   "crons": [
     { "path": "/api/cron/daily-overdue-check", "schedule": "0 7 * * *" },
     { "path": "/api/cron/stale-issue-detection", "schedule": "30 7 * * *" },
