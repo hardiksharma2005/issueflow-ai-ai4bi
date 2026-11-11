@@ -1,106 +1,90 @@
-# 10 · Testing and test report
+# 10. How we tested it
 
-## Test suites
+Before showing the tool to anyone, we checked that it works, that it is safe, and that it is quick. We used **three kinds of tests**, from small to large.
 
-| Suite | Command | Needs | What it covers |
+## The three kinds of tests
+
+| Kind | In everyday terms | How many | Result |
 |---|---|---|---|
-| Unit | `npm test` | nothing | WhatsApp parser, media matching, AI output validation, mock extraction on the sample chat, duplicate scoring, Grok response parsing, file validation, input schemas, analytics, reports/CSV, cron parsing, redirect safety |
-| Integration | `npm run test:integration` | Supabase project with migrations applied (`.env.local`) | Row Level Security and database guardrails, run as real users with the public key. Creates its own users and projects and deletes them afterwards. Skipped automatically if Supabase is not configured. |
-| End-to-end | `npm run test:e2e` | running app (`npm start` or `npm run dev`), seeded demo data, Edge or Chrome installed | Real browser (playwright-core): every page for every role at 1440 px and 390 px, member permissions, the full WhatsApp import with AI review, duplicate import, CSV export, search, registration, sign-out, password reset, automations. Changes demo data — run `npm run db:reset-demo` afterwards. |
-| Static | `npm run lint`, `npm run typecheck` | nothing | ESLint (Next.js + React compiler rules), route types + `tsc --noEmit` |
+| **Small checks** | Testing each part on its own, like checking every light switch in a house | 61 | **All passed** |
+| **Security checks** | Pretending to be different people and trying to break the rules on the real store room | 12 | **All passed** |
+| **Full walk-throughs** | A robot opens the real website in a web browser and clicks through everything a person would, on a computer screen and on a phone-sized screen | 36 | **All passed**, on the live site, twice in a row |
 
-Set `E2E_BROWSER=chrome` to use Chrome instead of Edge, and `E2E_BASE_URL` to test another deployment.
+All tests are saved, so they can be run again any time something changes.
 
-## Test report — 10 November 2026
+## What the small checks cover
+- Reading WhatsApp chats from Android and iPhone, in different date and time styles
+- Matching photos to messages
+- Checking the AI's answers: throwing away suggestions with no proof, never trusting names or dates from the AI
+- Making sure the trick message in the practice chat never becomes an issue
+- Spotting duplicates
+- Report downloads (including making Excel formulas harmless)
+- Dates and times shown in India time
+- Blocking web links that would send people to other sites
 
-Environment: Windows 11, Node.js 26.8, Next.js 16.4.6 production build (`next build` + `next start`), Supabase free-tier project (region ap-southeast-2), `AI_PROVIDER=mock`, Microsoft Edge (headless) for the browser suite.
+## The security checks: trying to break the rules
 
-| Check | Result |
+| We tried to… | Result |
 |---|---|
-| `npm run lint` | pass, 0 problems |
-| `npm run typecheck` | pass |
-| `npm run build` | pass, 26 routes |
-| `npm test` | **58 / 58 passed** (3 files) |
-| `npm run test:integration` | **12 / 12 passed** against the real database |
-| `npm run test:e2e` | **36 / 36 checks passed** with `AI_PROVIDER=mock`, and again with `AI_PROVIDER=groq` (real model: 7 drafts, BLOOM-7 duplicate flagged) |
-| `npm run db:migrate` on an empty project | 5 migrations applied |
-| `npm run db:seed` / `db:reset-demo` | 5 users, 3 projects, 24 issues, 1 past import, 4 automation runs |
+| Read information without signing in | Refused |
+| See another project's problems as a member | Refused |
+| Make yourself an admin as a member | Refused |
+| Create problems or projects as a member | Refused |
+| Change a problem's title or urgency as a member | Refused (only progress can be changed) |
+| Change progress on a problem given to someone else | Refused |
+| Create problems in a project you don't manage, as a manager | Refused |
+| Give a problem to someone outside the project | Refused |
+| Read the activity record as a member | Refused |
+| See or approve AI suggestions as a member | Refused |
+| Approve the same suggestion twice | Refused |
+| Upload the same chat twice | Refused |
+| Find another project's information through search | Nothing found |
+| Open another project's photos | Refused |
 
-### Integration tests (database, as real users)
+## The full walk-throughs: what the robot does
 
-| # | Scenario | Result |
+1. **Without signing in:** tries to open pages and is sent to the sign-in page.
+2. **As admin, manager and member:** opens every page on a computer screen and on a phone screen, checking each page loads without errors and nothing spills off the side of the screen.
+3. **As a member:** confirms they can't upload chats, can change the progress of their own task, can't change urgency or owner, and can add a comment.
+4. **As the manager:** uploads the practice WhatsApp chat, then:
+   - checks all 37 messages were read
+   - runs the real AI, which produces 7 suggestions
+   - checks the duplicate warning ("may already be BLOOM-7") appears
+   - checks the trick message didn't become a problem
+   - checks every photo loads
+   - approves one suggestion and rejects another
+   - confirms the approved one is now a real problem, linked to its WhatsApp messages
+   - tries to upload the same chat again, which is blocked
+   - downloads a report and searches for "payment"
+5. **Accounts:** creates a new account (rejecting a too-short password without wiping the form), signs out, tries a wrong password, tries "forgot password", and runs an automatic check as admin.
+
+## Speed
+
+| | Before improvement | After |
 |---|---|---|
-| 1 | Anonymous client reads no issues; cannot call `search_all` | pass |
-| 2 | Members see only their projects; outsiders see no issues of other projects | pass |
-| 3 | Member cannot promote themselves to admin ("Only admins can change roles") | pass |
-| 4 | Member cannot create issues or projects | pass |
-| 5 | Member can change status of an assigned issue only, and no other field | pass |
-| 6 | Manager can create/assign in own project; not in other projects; cannot assign non-members | pass |
-| 7 | Activity history recorded; audit log written; members cannot read the audit log | pass |
-| 8 | Non-whitelisted audit events are rejected | pass |
-| 9 | Member cannot approve or even see drafts; manager approval is single-use; import completes | pass |
-| 10 | Same conversation cannot be imported twice into a project (unique violation) | pass |
-| 11 | Search returns only rows the caller may see | pass |
-| 12 | Storage: cannot upload into another project's folder; outsiders cannot download | pass |
+| Opening a page | 1.5 – 2.4 seconds | 0.5 – 1.0 seconds |
+| Signing in | 4.3 seconds | 2.7 seconds |
 
-### End-to-end checks (browser)
+See [document 8](08-deployment.md) for how this was improved.
 
-| Area | Checks | Result |
-|---|---|---|
-| Signed-out | redirect to login; cron 401 without secret; CSV export 401 | 3 pass |
-| Every page × admin/manager/member × desktop/phone | HTTP 200, no error boundary, no page errors, **no horizontal scroll at 390 px** | 6 pass |
-| Member | cannot start imports; status editable, priority/assignee locked; status saved; comment saved; import APIs return 403; no audit log | 7 pass |
-| Manager import | 37 messages parsed; 7 drafts; "Simulated" labels; duplicate of BLOOM-7 flagged; prompt injection not turned into an issue; evidence images load; approve/reject; approved issue has source `whatsapp_import` and 9 linked messages; re-import blocked; CSV export; Ctrl+K search; no page errors | 13 pass |
-| Accounts | weak password rejected with input kept; registration creates a member with no projects; sign-out; generic wrong-password message; forgot-password does not reveal accounts; admin "Run now" | 7 pass |
+## Problems found by testing, and fixed
 
-### Manual and HTTP checks
+Testing is useful because it finds problems before users do. These were all found and fixed:
 
-| Check | Result |
+| What was wrong | What we did |
 |---|---|
-| Cron endpoint: no header → 401, wrong secret → 401, unknown job → 404, valid secret → 200 with logged run | pass |
-| Cron with `CRON_SECRET` unset → 503 (does not run unauthenticated) | pass (before Supabase was configured) |
-| App without Supabase env vars → `/setup` page instead of a crash | pass |
-| Security headers present on responses | pass |
-| Retry after a parse that failed half-way (37 messages already stored) → parsed cleanly | pass |
-| Visual review of dashboard, board, import review (desktop and phone) | pass after fixes below |
+| Some pages were too wide on a phone and needed sideways scrolling | Fixed the layout; every page now fits a phone screen |
+| A chart drew curved lines suggesting numbers that never existed | Changed it to a clear running total |
+| Forms erased everything you typed if you made one small mistake | Forms now keep what you typed |
+| Deleting a project left its uploaded files behind | Files are now removed too |
+| A sign-in link could be misused to send people to another website | Closed: only our own site is allowed |
+| If the connection dropped while reading a chat, retrying didn't work | Retrying now works |
+| A brief connection drop could make the tool think you'd signed out | Now it says "please try again" instead |
+| Times were shown 5½ hours wrong on the live site (UK time instead of India time) | All times now show in India time |
+| Pages were slow because the website and store room were on different continents | Moved them next to each other |
 
-### Defects found during testing (all fixed)
-
-| Defect | Found by | Fix |
-|---|---|---|
-| `db:migrate` crashed (top-level await compiled to CommonJS) | first run | wrapped in `main()` |
-| Seed failed: writes without `.select()` return no rows | first run | error-only `check()` for writes |
-| Pasted `…/rest/v1/` Supabase URL broke admin API calls | first run | URL normalised to origin |
-| Draft review column overflowed its card when a long duplicate title was selected; three pages scrolled sideways on phones | browser | `grid-cols-1` (`minmax(0,1fr)`) for single-column grids; truncating selects |
-| Created-vs-resolved chart drew invented humps between days | visual review | running totals with straight lines |
-| Import titled after a screenshot instead of the chat | visual review | chat files listed first |
-| Deleting a project left raw import uploads in storage | storage audit | collect and remove raw files; reset cleans orphans |
-| Forms lost all input after a validation error | browser | keep values (auth: `defaultValue`; dialogs: `onSubmit`) |
-| Open redirect: auth callback accepted `next=/\evil.com` | security review while documenting | shared `safeRedirectPath` checks the resolved origin; unit tests |
-| Retrying a half-failed import hit a unique-constraint error and could never succeed | browser (network drop) | retry clears the previous attempt's rows |
-| A dropped connection during the session check showed "not signed in" / redirected to login | browser (network drop) | 503 / retryable error instead; reads retried once |
-
-### Production (https://issueflow-ai-ai4bi.vercel.app, 11 Nov 2026)
-
-| Check | Result |
-|---|---|
-| `E2E_BASE_URL=… npm run test:e2e` with `AI_PROVIDER=groq` | **36 / 36 passed** (two consecutive clean runs; earlier runs during deploys had single navigation timeouts) |
-| Cron endpoint: no header / wrong secret → 401; valid secret → 200 and logged | pass |
-| Security headers incl. HSTS | pass |
-| Page load (signed in, from India), functions in `iad1` → `syd1` | 1.5–2.4 s → **0.55–1.0 s**; sign-in 4.3 s → 2.7 s; cron 3.9 s → 1.2 s |
-
-Found on production and fixed: server-rendered times were in UTC (Vercel) and re-rendered in the browser's zone, causing React hydration error #418 — now one app time zone everywhere.
-
-### Not verified
-
-- **xAI Grok end-to-end.** No xAI key was used (paid). Request building and response parsing are unit-tested; a real call has not been made. (GroqCloud, a different provider, *was* verified end-to-end.)
-- **Scheduled Vercel Cron runs.** The endpoint works on production with the secret; the first run triggered by Vercel's scheduler had not happened yet at the time of testing.
-- **Email delivery** (confirmation, reset, invite). Email confirmation was off for testing; the forgot-password check used an address with no account so no email was sent.
-- **Real WhatsApp exports from many locales.** The parser is tested with Android/iOS, 12/24 h, dotted and ISO formats and localised attachment markers, using synthetic fixtures.
-- Browsers other than Chromium-based Edge; screen-reader testing.
-
-## Writing tests
-
-- Unit tests live in `tests/unit/*.test.ts`; `@/` resolves to the project root and `server-only` is stubbed.
-- Integration tests must clean up everything they create (`afterAll`). Use `describe.skipIf(!enabled)` so the suite stays green without credentials.
-- For UI changes, run `npm run test:e2e` against a production build — it catches layout overflow, error boundaries and permission regressions that unit tests can't.
+## Not tested yet
+- **Emails** (password reset, invitations). Email sending was kept off during testing to avoid sending to made-up addresses.
+- **The paid "Grok" AI** option. We use the free Groq AI, which *was* fully tested.
+- **Real WhatsApp chats from many different countries and phone languages.** Tested with common formats only.
+- **Screen readers** for people with low vision.

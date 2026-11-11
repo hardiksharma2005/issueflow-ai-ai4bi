@@ -1,90 +1,84 @@
-# 11 · Development walkthrough
+# 11. How it was built, step by step
 
-How to work on the codebase: local setup, the shape of a typical change, and recipes for common extensions.
+This is the story of how IssueFlow AI went from an empty folder to a working tool on the internet, one step at a time. Each step explains **what we did** and **why**.
 
-## Local setup
+---
 
-```bash
-npm install
-cp .env.example .env.local       # fill in Supabase values (docs/08-deployment.md)
-npm run db:migrate
-npm run db:seed
-npm run dev                      # http://localhost:3000, Turbopack
-```
+### Step 1 — Writing down what we needed
+**What:** We listed what the tool must do: read WhatsApp chats, suggest problems with proof, let a person approve them, keep a shared list, show charts and reports, run daily checks, and keep data safe.
+**Why:** A clear list keeps the work focused, and lets us check at the end that everything was done.
 
-Useful while developing:
+### Step 2 — Preparing the workshop
+**What:** We set up the computer with the tools needed to build a website, and created an empty project from a standard starting template.
+**Why:** Like a carpenter setting up a workbench before building furniture.
 
-```bash
-npm run test:watch               # unit tests in watch mode
-npm run typecheck                # after adding routes: regenerates PageProps/RouteContext types
-npm run db:reset-demo            # back to a clean demo dataset
-```
+### Step 3 — Designing the filing cabinets first
+**What:** Before any screens, we designed where every piece of information is kept (see [document 3](03-database-design.md)) and wrote the safety rules: who may see and change what.
+**Why:** Putting the rules **in the store room itself** means they protect the data even if a screen has a mistake. It is like fitting the locks before moving the furniture in.
 
-Next.js 16 differs from older versions you may know. Before using an unfamiliar API, read the matching guide in `node_modules/next/dist/docs/` (see `AGENTS.md`).
+### Step 4 — Teaching the tool to read WhatsApp chats
+**What:** We wrote the part that splits a WhatsApp file into separate messages, understands different phones' date styles, spots WhatsApp's own notes ("X added Y"), and pairs photos with messages.
+**Why:** Chats from Android phones and iPhones look different. We tested each style before moving on.
 
-## Anatomy of a feature
+### Step 5 — Connecting the AI, with safety checks
+**What:** We wrote the instructions for the AI (find real problems, group follow-ups, never invent anything, ignore orders inside the chat) and the checks that test its answers (see [document 5](05-ai-integration.md)).
+**Why:** AI can be wrong. We decided early that the AI only *suggests*, the tool *checks*, and a person *decides*.
 
-A typical change touches these layers, top to bottom:
+### Step 6 — A free practice mode
+**What:** We built a simple rule-based "pretend AI" that works without any AI service and labels everything *Simulated*.
+**Why:** So the tool can be shown and tested for free, and nobody mistakes practice results for real AI.
 
-1. **Database** — new migration `database/migrations/0006_<name>.sql`: table/columns, RLS policies, triggers. Never edit an applied migration; add a new one. Add matching types to `types/db.ts`.
-2. **Validation** — a Zod schema in `lib/validation/schemas.ts`.
-3. **Server Action** — `lib/actions/<area>.ts`:
-   ```ts
-   export async function doThing(input: unknown): Promise<ActionResult> {
-     try {
-       await assertViewer(["admin", "manager"]);           // fast, friendly rejection
-       const data = thingSchema.parse(input);              // never trust the client
-       const supabase = await createClient();              // runs as the user → RLS applies
-       const { error } = await supabase.from("things").insert(data);
-       if (error) throw error;
-       revalidatePath("/things");
-       return ok(undefined, "Thing created");
-     } catch (err) {
-       return fail(err);                                   // maps errors to safe messages
-     }
-   }
-   ```
-4. **Page** — a Server Component under `app/(app)/…` that calls `requireViewer()` and queries Supabase. Read `searchParams` (a promise) for filters.
-5. **Client component** — in `components/<area>/`, calling the action with `useTransition` and showing the result with `toast`.
-6. **Tests** — unit tests for pure logic; an integration test case if the change adds or relies on a policy; extend `tests/e2e/smoke.mjs` for a new page.
+### Step 7 — Building the screens
+**What:** Sign-in pages, the dashboard, project pages, the problem list and board, the problem detail page, My Tasks, the upload screens, the review screen, reports, automations, team and settings (see [document 6](06-frontend-development.md)).
+**Why:** These are what people actually use, so we kept them clean, readable and usable on phones.
 
-Rules of thumb:
+### Step 8 — Practice data
+**What:** A made-up WhatsApp chat with 7 hidden problems (and one trick message), sample photos, five practice accounts, three made-up clients and 24 sample problems.
+**Why:** So everyone can try the tool safely, without real client information.
 
-- Authorization belongs in the database. The `assertViewer` check is for a good error message, not for security.
-- Use the admin client (`lib/supabase/admin.ts`) only when there is no user (cron) or for auth-admin operations, and only after checking the caller.
-- `"use server"` files export only async functions. Put shared types and sync helpers in `lib/`.
-- Use `lib/domain.ts` for enum labels and colours and `lib/format.ts` for dates, so the UI stays consistent.
+### Step 9 — Connecting the real store room
+**What:** We created the free Supabase store room, built the cabinets in it, and loaded the practice data.
+**Why:** Up to here, parts were tested separately. Now everything worked together for the first time, and this revealed small setup problems, which we fixed.
 
-## Recipes
+### Step 10 — Testing like a real user
+**What:** A robot opened the tool in a browser and clicked through every page as admin, manager and member, on a computer and on a phone (see [document 10](10-testing.md)).
+**Why:** It found real problems, such as pages too wide for phones and forms that erased what you typed. All were fixed.
 
-### Add an issue field (e.g. `estimate_hours`)
+### Step 11 — Writing the documents
+**What:** We wrote these documents, checking each statement against the actual tool.
+**Why:** While writing about safety we re-checked every protection, and found and closed one gap: a sign-in link that could have been misused.
 
-1. Migration: `alter table public.issues add column estimate_hours numeric(5,1) check (estimate_hours >= 0);`. Decide whether members may change it; if not, nothing else is needed, because `issues_before_update` already blocks members from changing anything except `status` by comparing a fixed list of columns. If they may, adjust that trigger.
-2. Add it to `types/db.ts`, `issueUpdateSchema`, the issue properties panel and, if needed, `ISSUE_LIST_SELECT` and reports.
+### Step 12 — Making it reliable
+**What:** We made the tool cope with brief internet hiccups: retrying safely, and showing "please try again" instead of wrongly signing people out.
+**Why:** Repeated testing showed the connection to Australia occasionally drops for a moment.
 
-### Add a report
+### Step 13 — Switching to the free Groq AI
+**What:** We connected Groq's free AI and tested it on the practice chat: it found all 7 problems in about 16 seconds.
+**Why:** It gives real AI results at no cost. Its limits (words only, a limited amount per minute) are handled by reading long chats in portions.
 
-Add an entry to `REPORTS` and a case to `buildReport` in `lib/reports.ts`. The Reports page and the CSV route pick it up automatically; `toCsv` handles escaping.
+### Step 14 — Putting it online
+**What:** We saved the code to GitHub, connected it to Vercel, entered the settings, and published it (see [document 8](08-deployment.md)).
+**Why:** So the team can use it from any computer or phone, with no installation.
 
-### Add an automation job
+### Step 15 — Testing the live site and speeding it up
+**What:** We ran the full robot test on the live site. We found times showing in UK time instead of India time and fixed that, and made pages about **twice as fast** by moving the website next to the store room.
+**Why:** The live site can behave differently from the developer's computer, so it needs its own testing.
 
-See [09-automation.md](09-automation.md#adding-a-job).
+### Step 16 — Final touches
+**What:** Renamed the practice accounts to AI4BI Admin, AI4BI Manager and AI4BI Member 1–3, and rewrote all documents in plain language.
+**Why:** So the team can recognise the roles at a glance and understand the documents without technical knowledge.
 
-### Add an AI provider
+---
 
-Implement `AIProvider` (`lib/ai/types.ts`): `info` (`name`, `model`, `simulated`, `supportsVision`) and `extract(input) → Promise<string>` returning JSON in the extraction shape. Build the user content with `buildUserPrompt` and keep `SYSTEM_PROMPT` as the system message. Register it in `getAIProvider()` behind its own `AI_PROVIDER` value — don't add fallbacks between providers. Everything downstream (validation, duplicates, drafts) works unchanged. Throw `AIProviderError(message, retryable)` with messages that never include the request or credentials.
+## Where we are now
 
-### Support another WhatsApp format
+- The tool is **live** and **fully tested**.
+- It uses **free services** throughout.
+- It contains **practice data**, ready for a demonstration.
 
-Add a fixture line to `tests/unit/parser.test.ts` first, then extend the header regexes or `SYSTEM_PATTERNS` in `lib/whatsapp/parser.ts`. Keep the "never invent" rule: unknown → `null` plus a warning.
+## Sensible next steps
 
-### Change the prompt
-
-Edit `lib/ai/prompt.ts` and bump `PROMPT_VERSION` (stored with every draft). Keep the security rules first. Run `npm test` — the AI tests check that the sample chat still produces the expected drafts with the mock and that validation rules hold.
-
-## Debugging
-
-- Server errors are logged with a tag: `[import parse]`, `[import process]`, `[parse route]`, `[import download]`, cron failures in `automation_logs.error`.
-- Import state lives in `imports.status`, `error_message` and `parse_warnings` (shown as "Import notes" on the import page). Drafts keep `raw_output` with the provider's untouched answer.
-- To see what a user can see, sign in as them. RLS makes the answer the same in the UI and in SQL.
-- To inspect the database, use the Supabase Table Editor or SQL editor. Note that the SQL editor runs as `postgres`, which bypasses RLS.
+1. Show it to the team (see the [demo guide](12-demo-script.md)) and collect feedback.
+2. Try it with one **real** WhatsApp chat from a client, with permission.
+3. Before real use: remove practice data, connect a proper email service, and decide who may create accounts.
+4. Possible additions: email or WhatsApp reminders, reading photos (needs the paid AI), and a second sign-in step for extra security.

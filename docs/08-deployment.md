@@ -1,118 +1,57 @@
-# 08 · Deployment
+# 8. How the tool was put online
 
-> **Status (11 Nov 2026):** deployed at https://issueflow-ai-ai4bi.vercel.app from GitHub `hardiksharma2005/issueflow-ai-ai4bi` (every push to `main` deploys). Verified on production: the full browser suite (36 checks, with GroqCloud), security headers, and the cron endpoint (401 without / 200 with the secret). Scheduled Vercel Cron runs start at the next scheduled time — check the Automations page the day after deploying.
+"Deployment" simply means **putting the tool on the internet** so anyone with the link and an account can use it.
 
-## 1. Supabase (free tier)
+**The tool is live at https://issueflow-ai-ai4bi.vercel.app** (since 11 November 2026).
 
-1. [supabase.com](https://supabase.com) → **New project**. Pick a region near your users and save the **database password**.
-2. **Project Settings → Data API**: copy the **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`. Use the bare URL `https://<ref>.supabase.co`, not the `/rest/v1/` endpoint (the app strips a path if one is pasted, but scripts are simpler with the bare URL).
-3. **Project Settings → API Keys**:
-   - `anon` (legacy) or **publishable** (`sb_publishable_…`) → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `service_role` (legacy) or a **secret** key (`sb_secret_…`) → `SUPABASE_SERVICE_ROLE_KEY` — server only, never commit, never prefix with `NEXT_PUBLIC_`.
-4. **Connect** (top of the dashboard) → **Session pooler** URI → `SUPABASE_DB_URL`. Replace `[YOUR-PASSWORD]` with the password **including removing the square brackets**.
-5. **Authentication → URL Configuration**
-   - Site URL: `http://localhost:3000` (later: your production URL)
-   - Redirect URLs: `http://localhost:3000/auth/callback`, and later `https://<your-domain>/auth/callback`
-6. **Authentication → Sign In / Providers → Email**: for a demo, turn **Confirm email** off. Supabase's built-in email sender allows only a few emails per hour and is meant for testing. For production, add custom SMTP (Authentication → Emails → SMTP settings) and turn confirmation back on.
-7. Apply the schema and (optionally) demo data:
+## The services involved
 
-   ```bash
-   npm run db:migrate      # needs SUPABASE_DB_URL
-   npm run db:seed         # needs DEMO_PASSWORD; skip in production
-   ```
+| Service | Its job | Cost |
+|---|---|---|
+| **GitHub** | Keeps the code safe, with a history of every change | Free |
+| **Vercel** | Runs the website and puts updates online automatically | Free plan |
+| **Supabase** | Stores the information, user accounts and files | Free plan |
+| **Groq** | The AI that reads chats | Free plan |
 
-   **Without a connection string** you can paste `database/migrations/0001…0005` into the **SQL Editor** one by one, in order. (`db:migrate` would then try to re-apply them, so stick to one method per database.)
+## How it was set up, step by step
 
-8. Check: `npm run test:integration` should report 12 passed.
+1. **Created the store room (Supabase).** A new free project was set up in the Sydney region. We copied its address and keys into a private settings file on the developer's computer.
+2. **Built the cabinets.** One command created all the cabinets, rules and the locked file area (see [document 3](03-database-design.md)).
+3. **Added practice data.** Another command created the five practice accounts, three made-up clients and 24 sample problems.
+4. **Saved the code to GitHub**, after checking that no secret keys were included.
+5. **Connected GitHub to Vercel.** On Vercel's website we chose "Import" and picked the GitHub project.
+6. **Gave Vercel its settings.** The store-room address, the keys and the AI key were typed into Vercel's private settings page. Secret ones are marked "Sensitive" so nobody can read them back.
+7. **Pressed Deploy.** About two minutes later the tool was live.
+8. **Told the store room about the new address**, so password-reset emails link to the live site and not to the developer's computer.
+9. **Tested everything on the live site** (see [document 10](10-testing.md)).
 
-## 2. GitHub
+## Making it fast
 
-The project is a local git repository with no remote yet.
+At first, pages took about **2 seconds** to open. We found the reason: the website was running in **America** while the store room is in **Australia**, so every request crossed the Pacific Ocean several times.
 
-```bash
-# create an empty repository on github.com first (no README/licence), then:
-git remote add origin https://github.com/<you>/issueflow-ai.git
-git branch -M main
-git push -u origin main
-```
+We moved the website to **Sydney**, right next to the store room. Now pages open in **about half a second to one second**:
 
-Before pushing, confirm no secrets are tracked:
+| | Before | After |
+|---|---|---|
+| A normal page | 1.5 – 2.4 seconds | 0.5 – 1.0 seconds |
+| Signing in | 4.3 seconds | 2.7 seconds |
 
-```bash
-git ls-files | grep -i env          # should list only .env.example
-git log -p | grep -iE "sb_secret_|service_role|xai-" || echo "clean"
-```
+The remaining time is mostly the distance between India and Australia. If we ever want it faster still, the store room could be moved to a Mumbai location.
 
-## 3. Vercel
+## How updates happen
 
-### Option A — dashboard (recommended)
+Whenever the developer saves an improvement to GitHub, **Vercel notices, rebuilds the tool and replaces the live version within about a minute**, with no downtime. If something goes wrong, Vercel keeps every earlier version, and going back takes one click.
 
-1. [vercel.com/new](https://vercel.com/new) → import the GitHub repository. Framework preset: **Next.js** (detected). Build command and output: defaults.
-2. **Environment Variables** (Production, and Preview if you use previews):
+## Things to know about the free plans
 
-   | Name | Value |
-   |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | as in `.env.local` |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | as in `.env.local` |
-   | `SUPABASE_SERVICE_ROLE_KEY` | as in `.env.local` — mark **Sensitive** |
-   | `NEXT_PUBLIC_SITE_URL` | `https://<project>.vercel.app` (or your domain) |
-   | `CRON_SECRET` | a new random string — mark **Sensitive** |
-   | `NEXT_PUBLIC_APP_TIMEZONE` | optional; IANA time zone for displayed dates, default `Asia/Kolkata` |
-   | `AI_PROVIDER` | `mock`, `groq` or `grok` |
-   | `GROQ_API_KEY`, `GROQ_MODEL` | only with `AI_PROVIDER=groq` — mark the key **Sensitive** |
-   | `XAI_API_KEY`, `XAI_MODEL` | only with `AI_PROVIDER=grok` — mark the key **Sensitive** |
+- **Supabase** pauses a free project that hasn't been used for about a week. If that happens, the tool shows an error until someone presses "Resume" in Supabase. Using the tool regularly prevents this.
+- **Groq** limits how much text the AI can read per minute; very long chats take longer.
+- **Vercel** runs each automatic check once a day, at roughly the scheduled time (it can be up to an hour late).
+- Password-reset emails use Supabase's built-in email sender, which only allows a few emails per hour. For everyday use by a larger team, a proper email service should be connected.
 
-   `SUPABASE_DB_URL` and `DEMO_PASSWORD` are **not** needed on Vercel.
+## Before real client data goes in
 
-3. Deploy. Then in Supabase add `https://<project>.vercel.app/auth/callback` to Redirect URLs and set Site URL to the production URL.
-
-### Option B — CLI
-
-```bash
-npm i -g vercel
-vercel link
-vercel env add SUPABASE_SERVICE_ROLE_KEY production   # repeat for each variable
-vercel deploy --prod
-```
-
-### Function region
-
-`vercel.json` sets `"regions": ["syd1"]` so functions run next to the Supabase database (ap-southeast-2). With Vercel's default (`iad1`, Washington) every query crossed the Pacific: pages took 1.5–2.4 s; in `syd1` they take 0.55–1 s from India. **If your Supabase project is in another region, change this** to the nearest Vercel region (e.g. `bom1` for ap-south-1, `fra1` for eu-central-1, `iad1` for us-east-1). Check the `x-vercel-id` response header: `bom1::syd1::…` means edge in Mumbai, function in Sydney.
-
-### Function limits
-
-- Import parsing and AI processing routes declare `maxDuration = 300` (5 min). Vercel's default timeout is 300 s on all plans with Fluid Compute.
-- Request bodies are limited to 4.5 MB on Vercel; the app uploads files directly from the browser to Supabase Storage, so large exports are not affected.
-
-## 4. Scheduled automations (Vercel Cron)
-
-`vercel.json` registers four jobs (times in UTC):
-
-| Path | Schedule |
-|---|---|
-| `/api/cron/daily-overdue-check` | `0 7 * * *` — daily 07:00 |
-| `/api/cron/stale-issue-detection` | `30 7 * * *` — daily 07:30 |
-| `/api/cron/weekly-project-summary` | `0 8 * * 1` — Mondays 08:00 |
-| `/api/cron/import-failure-monitor` | `0 9 * * *` — daily 09:00 |
-
-Vercel calls each path with `Authorization: Bearer <CRON_SECRET>` when the `CRON_SECRET` environment variable is set. Cron jobs run on **production deployments only**. On the Hobby plan each job may run at most once a day and the exact minute can drift by up to about an hour; all four schedules fit those limits.
-
-After deploying, verify:
-
-```bash
-curl -i https://<project>.vercel.app/api/cron/daily-overdue-check                       # 401
-curl -i -H "Authorization: Bearer $CRON_SECRET" https://<project>.vercel.app/api/cron/daily-overdue-check   # 200 + summary
-```
-
-Then check **Automations** in the app (admin) for the logged run, and the **Cron Jobs** tab of the Vercel project.
-
-## 5. Production checklist
-
-- [ ] Confirm email **on** and custom SMTP configured
-- [ ] Sign-ups disabled if the workspace should be invite-only
-- [ ] `NEXT_PUBLIC_SITE_URL` and Supabase Site URL / Redirect URLs point to the production domain
-- [ ] Demo data not seeded (or removed with `npm run db:reset-demo` then deleting demo users in Supabase Auth)
-- [ ] `CRON_SECRET` set; cron endpoint returns 401 without it
-- [ ] `AI_PROVIDER` decided; if `grok`, a spending limit set in the xAI console; if `groq`, the free-plan limits are acceptable for expected import volume
-- [ ] First account registered by the intended admin (the first user becomes admin)
-- [ ] Supabase backups: daily backups are included on paid plans; on the free plan export the database periodically
+- [ ] Remove the practice accounts and practice projects
+- [ ] Decide whether strangers may sign up, or switch to invitation only
+- [ ] Connect a proper email service for password resets
+- [ ] Make sure the right person creates the first real admin account

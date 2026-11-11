@@ -11,7 +11,8 @@ export default function AppError({ error, reset }: { error: Error & { digest?: s
       </div>
       <h1 className="text-lg font-semibold">Something went wrong</h1>
       <p className="text-sm text-muted-foreground">
-        The page could not be loaded. If this keeps happening, check that the database migrations have been applied.
+        The page could not be loaded. This is usually a brief connection problem, so please try again in a moment. If it keeps
+        happening, let the person who looks after the tool know.
         {error.digest && <span className="mt-1 block font-mono text-xs">Reference: {error.digest}</span>}
       </p>
       <Button onClick={reset}>Try again</Button>

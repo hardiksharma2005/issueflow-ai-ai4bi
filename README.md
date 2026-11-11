@@ -1,112 +1,76 @@
 # IssueFlow AI
 
-Turn WhatsApp support conversations into a reviewed, trackable issue list.
+**Turning WhatsApp messages from clients into a tidy, trackable list of problems.**
 
-Upload a WhatsApp chat export (`.txt` or `.zip` with media), screenshots and documents. IssueFlow AI parses the conversation, matches media to the messages that sent them, asks an AI model to propose issue drafts with evidence, flags likely duplicates, and puts every draft in front of a human. **Nothing becomes an issue until a manager approves it.** Approved issues then live in a normal tracker: table and Kanban views, comments, attachments, activity history, dashboards, CSV reports and scheduled automations.
+Open the tool here: **https://issueflow-ai-ai4bi.vercel.app**
 
-Runs completely free in **demo mode**: a deterministic local `MockAIProvider` replaces the AI model and every result it produces is labelled **Simulated**. For real model output use **GroqCloud** (free plan) or **xAI Grok** (paid) by setting two environment variables.
+---
 
-| | |
-|---|---|
-| Stack | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui · Recharts |
-| Backend | Supabase: Postgres with Row Level Security, Auth, Storage |
-| AI | GroqCloud `openai/gpt-oss-120b` (free plan), xAI Grok (Responses API) or the free MockAIProvider — all with strict JSON-schema output |
-| Validation | Zod on every server boundary; AI output validated against the source conversation |
-| Scheduling | Vercel Cron → `/api/cron/[job]` with a bearer secret |
-| Tests | Vitest: 58 unit tests, 12 integration tests against a real Supabase project; 36-check browser suite (playwright-core) |
+## What is it, in one minute?
 
-## Quick start (free mode, ~10 minutes)
+Many of our clients tell us about problems in WhatsApp groups. Over a few days a group fills up with hundreds of messages: greetings, "thank you", "on it 👍", photos, and somewhere in between, the real problems that need fixing. It is easy for something important to get lost.
 
-Requirements: Node.js 22+, a free [Supabase](https://supabase.com) project (no credit card).
+IssueFlow AI helps with this:
 
-```bash
-npm install
-cp .env.example .env.local      # then fill in the Supabase values — see below
-npm run db:migrate              # creates tables, policies, functions, storage bucket
-npm run db:seed                 # demo users, 3 projects, 24 issues, a past import
-npm run dev                     # http://localhost:3000
-```
+1. **We upload the WhatsApp chat** (WhatsApp can save any chat as a file).
+2. **The computer reads the chat** and picks out each real problem, with the exact messages and photos that mention it.
+3. **A person checks every suggestion** and clicks *Approve*, changes it, or throws it away. The computer never adds anything on its own.
+4. **Approved problems go onto a shared list**, where the team can see who is working on what, what is late, and what is finished.
 
-Values for `.env.local` (full walkthrough in [docs/08-deployment.md](docs/08-deployment.md)):
+Think of it as a very fast assistant who reads the whole chat and hands you neat notes, while you stay the one who decides.
 
-| Variable | Where to find it |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → Data API → Project URL (`https://<ref>.supabase.co`, no path) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API Keys → `anon`/`publishable` key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API Keys → `service_role`/`secret` key — **server only** |
-| `SUPABASE_DB_URL` | **Connect** → Session pooler URI, with your database password (no `[ ]`) — only used by `db:migrate` |
-| `CRON_SECRET` | any random string ≥ 16 chars: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `DEMO_PASSWORD` | password you choose for the demo users (≥ 8 chars) |
-| `AI_PROVIDER` | `mock` (free, default), `groq` (with `GROQ_API_KEY`) or `grok` (with `XAI_API_KEY`) |
+## Who can sign in to try it?
 
-In the Supabase dashboard also set **Authentication → URL Configuration**: Site URL `http://localhost:3000`, redirect URL `http://localhost:3000/auth/callback`, and (for demos) turn off **Confirm email** under Authentication → Sign In / Providers → Email.
+We have set up practice accounts with made-up clients and problems, so the team can explore without any risk.
 
-### Demo logins
-
-After `npm run db:seed`, sign in with any of these and the `DEMO_PASSWORD` from your `.env.local`:
-
-| Email | Role | Sees |
+| Sign in as | Name shown | What this person can do |
 |---|---|---|
-| `admin@issueflow.example` | Admin | Everything, team management, automations, audit log |
-| `manager@issueflow.example` | Manager | BLOOM and RVSD projects; imports and AI review (not CARE — useful for showing project isolation) |
-| `member@issueflow.example` | Member | RVSD and CARE; can change status of issues assigned to them and comment |
-| `daniel@issueflow.example` · `sara@issueflow.example` | Member | BLOOM · BLOOM and CARE |
+| `admin@issueflow.example` | AI4BI Admin | Everything, including managing the team and settings |
+| `manager@issueflow.example` | AI4BI Manager | Upload WhatsApp chats, check the computer's suggestions, manage problems |
+| `member@issueflow.example` | AI4BI Member 1 | See their projects, update their own tasks, write comments |
+| `daniel@issueflow.example` | AI4BI Member 2 | Same as Member 1, on a different project |
+| `sara@issueflow.example` | AI4BI Member 3 | Same as Member 1, on two projects |
 
-The 5-minute demo is in [docs/12-demo-script.md](docs/12-demo-script.md). The short version: sign in as the manager → **Imports → New import** → pick *BLOOM* → **Use sample WhatsApp data** → **Upload & extract messages** → **Process with AI** → review the 7 drafts, approve one, link the out-of-stock one to its existing duplicate.
+The password is shared privately by the person running the demo. It is not written here on purpose.
 
-## Using a real AI model
+## What to read
 
-**Groq and Grok are different companies** with different keys — use the variables that match your key.
+The documents are written for everyone. No technical knowledge is needed.
 
-| | GroqCloud ([console.groq.com](https://console.groq.com)) | xAI Grok ([console.x.ai](https://console.x.ai)) |
-|---|---|---|
-| Variables | `AI_PROVIDER=groq`, `GROQ_API_KEY=gsk_…`, optional `GROQ_MODEL` (default `openai/gpt-oss-120b`) | `AI_PROVIDER=grok`, `XAI_API_KEY=xai-…`, optional `XAI_MODEL` (default `grok-4.7`) |
-| Cost | Free plan, rate-limited (≈ 8K tokens/min on gpt-oss models) | Billed per token |
-| Screenshots | Not analysed (text-only model); kept as evidence | Read by the model (JPEG/PNG) |
-| Verified | Yes — sample chat → 7 drafts in ~16 s | Not called yet |
-
-Grok usage is **billed per token by xAI** (see [docs/05-ai-integration.md](docs/05-ai-integration.md) for current pricing and a cost estimate per import). The app never falls back from Grok to the mock or the other way round: if `AI_PROVIDER=grok` and the key is missing, AI processing is disabled with an explanatory message. The API key is only read on the server.
-
-## Scripts
-
-| Command | What it does |
+| Document | What it explains |
 |---|---|
-| `npm run dev` / `build` / `start` | Next.js development server / production build / production server |
-| `npm run lint` · `npm run typecheck` | ESLint · route type generation + `tsc --noEmit` |
-| `npm test` | Unit tests (parser, AI validation, mock extraction, duplicates, CSV, cron) |
-| `npm run test:integration` | RLS and database guardrail tests against the Supabase project in `.env.local` (creates and deletes its own data) |
-| `npm run test:e2e` | Browser smoke test against a running app with demo data (Edge or Chrome); run `db:reset-demo` afterwards |
-| `npm run db:migrate` | Applies `database/migrations/*.sql` in order; safe to re-run |
-| `npm run db:seed` | Creates demo users and projects (skips projects if they exist) |
-| `npm run db:reset-demo` | Deletes demo projects and their stored files, then seeds again |
-| `npm run demo:assets` | Regenerates the sample screenshots and ZIP in `public/demo/` |
+| [1. What the tool is for](docs/01-product-requirements.md) | The problem it solves and everything it can do |
+| [2. How it fits together](docs/02-architecture.md) | The four building blocks, explained with everyday comparisons |
+| [3. Where information is kept](docs/03-database-design.md) | What is stored, and how it is kept separate and safe |
+| [4. How WhatsApp chats are read](docs/04-whatsapp-processing.md) | What happens to a chat after you upload it |
+| [5. How the AI helps](docs/05-ai-integration.md) | What the AI does, what it is not allowed to do, and what it costs |
+| [6. A tour of the screens](docs/06-frontend-development.md) | Every page of the tool, one by one |
+| [7. Logging in and keeping data safe](docs/07-authentication-and-security.md) | Passwords, who can see what, and how we protect client information |
+| [8. How the tool was put online](docs/08-deployment.md) | Where it lives on the internet and how updates happen |
+| [9. Automatic daily checks](docs/09-automation.md) | The reminders the tool runs by itself every day |
+| [10. How we tested it](docs/10-testing.md) | What we checked, the results, and what we fixed |
+| [11. How it was built, step by step](docs/11-development-walkthrough.md) | The whole journey, from an empty folder to a working tool |
+| [12. Demo guide](docs/12-demo-script.md) | A click-by-click guide for showing the tool to others |
+| [13. Help with common problems](docs/13-troubleshooting.md) | What to do if something doesn't work |
+| [Project diary](DEVELOPMENT_LOG.md) | A short timeline of what was done, in order |
 
-## Documentation
+For developers, the detailed technical versions of all these documents are in [docs/technical](docs/technical/README-technical.md).
 
-| | |
+## Good to know before showing it
+
+- **The AI is free to use.** We use a service called Groq on its free plan. It is limited in how much it can read per minute, so very long chats take a little longer.
+- **The AI reads words, not pictures.** Photos and screenshots are saved and attached to the right problem, but the AI does not look inside them.
+- **Chats are uploaded as files.** The tool is not connected to WhatsApp directly, and it cannot read anyone's phone.
+- **Reminders appear inside the tool only.** It doesn't send emails or WhatsApp messages yet.
+- **All the people and companies in the practice data are made up.**
+
+## A few words you may come across
+
+| Word | Meaning |
 |---|---|
-| [01 Product requirements](docs/01-product-requirements.md) | Who it is for, features, roles, non-goals |
-| [02 Architecture](docs/02-architecture.md) | Components, request flow, import pipeline, folder layout |
-| [03 Database design](docs/03-database-design.md) | Tables, triggers, functions, RLS model |
-| [04 WhatsApp processing](docs/04-whatsapp-processing.md) | Supported export formats, parsing, media matching, limits |
-| [05 AI integration](docs/05-ai-integration.md) | Providers, prompt, schema, validation, guardrails, cost |
-| [06 Frontend development](docs/06-frontend-development.md) | Pages, components, design tokens, charts, accessibility |
-| [07 Authentication & security](docs/07-authentication-and-security.md) | Auth flows, authorization layers, threat model |
-| [08 Deployment](docs/08-deployment.md) | Supabase setup, GitHub, Vercel, environment variables |
-| [09 Automation](docs/09-automation.md) | Scheduled jobs, cron security, logs |
-| [10 Testing & test report](docs/10-testing.md) | Test strategy and the latest verified results |
-| [11 Development walkthrough](docs/11-development-walkthrough.md) | How to extend the codebase |
-| [12 Demo script](docs/12-demo-script.md) | Step-by-step product demo |
-| [13 Troubleshooting](docs/13-troubleshooting.md) | Known errors and fixes |
-| [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) | What was built, decisions, and problems found along the way |
-
-## Known limitations
-
-- **Deployed** at https://issueflow-ai-ai4bi.vercel.app (Vercel, functions in `syd1` next to the Supabase database) and verified with the full browser suite. The cron endpoint is verified over HTTP with the secret; the first *scheduled* run by Vercel Cron happens at the next scheduled time and is visible on the Automations page.
-- **xAI Grok has not been called end-to-end** (paid); its request building and response parsing are unit-tested. **GroqCloud has been verified end-to-end** with the sample chat.
-- With Groq, screenshots are stored and linked as evidence but not read by the model, and the free plan's per-minute token limit makes large chats slower (processed in batches of 60 messages, waiting when rate-limited).
-- The mock provider is a rule-based heuristic tuned on realistic support chats. It is good enough to demonstrate the workflow, not a substitute for a model.
-- Screenshots are only *read* by Grok (JPEG/PNG). The mock provider attaches screenshots to issues by timing and context but cannot see their contents.
-- Voice notes, video and documents are stored as evidence but not transcribed or analysed.
-- Notifications are in-app only (no email/Slack delivery); automation results are recorded in the automation log.
-- Supabase's built-in email service is heavily rate-limited; configure custom SMTP before relying on password-reset emails in production.
+| **Issue** | One problem or request that needs doing, like "the payment page shows an error" |
+| **Project** | One client or piece of work. Each project has its own list of issues and its own team |
+| **Draft** | A problem the computer *suggests*. It only becomes an issue after a person approves it |
+| **AI** | Artificial intelligence: a computer program that can read text and summarise it |
+| **Import** | Uploading a WhatsApp chat into the tool |
+| **Kanban board** | A view where each issue is a card, and cards move across columns such as "Open", "In progress" and "Done" |

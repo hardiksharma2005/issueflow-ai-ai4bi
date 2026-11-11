@@ -42,11 +42,11 @@ function check(res: { error: { message: string } | null }, what: string) {
 
 // ---------------------------------------------------------------------------
 const USERS = [
-  { key: "admin", email: "admin@issueflow.example", name: "Asha Verma", role: "admin" },
-  { key: "manager", email: "manager@issueflow.example", name: "AI4BI Admin", role: "manager" },
-  { key: "member", email: "member@issueflow.example", name: "Neha Singh", role: "member" },
-  { key: "daniel", email: "daniel@issueflow.example", name: "Daniel Okafor", role: "member" },
-  { key: "sara", email: "sara@issueflow.example", name: "Sara Lim", role: "member" },
+  { key: "admin", email: "admin@issueflow.example", name: "AI4BI Admin", role: "admin" },
+  { key: "manager", email: "manager@issueflow.example", name: "AI4BI Manager", role: "manager" },
+  { key: "member", email: "member@issueflow.example", name: "AI4BI Member 1", role: "member" },
+  { key: "daniel", email: "daniel@issueflow.example", name: "AI4BI Member 2", role: "member" },
+  { key: "sara", email: "sara@issueflow.example", name: "AI4BI Member 3", role: "member" },
 ] as const;
 type UserKey = (typeof USERS)[number]["key"];
 
@@ -149,10 +149,10 @@ const PROJECTS: {
 // A small past import (already processed and reviewed) for the Riverside project.
 const PAST_CHAT = `27/10/2026, 08:40 - Vikram Rao: Morning. Water is leaking from the AC unit in meeting room 2B again, there's a stain on the ceiling
 27/10/2026, 08:41 - Vikram Rao: IMG-20261027-WA0001.jpg (file attached)
-27/10/2026, 08:55 - AI4BI Admin: Thanks Vikram, Neha can you check with the HVAC contractor?
-27/10/2026, 09:02 - Neha Singh: Calling them now
+27/10/2026, 08:55 - AI4BI Manager: Thanks Vikram, AI4BI Member 1 can you check with the HVAC contractor?
+27/10/2026, 09:02 - AI4BI Member 1: Calling them now
 27/10/2026, 15:20 - Kavita Nair: Also the lights near the windows in the open-plan area keep flickering
-27/10/2026, 15:22 - AI4BI Admin: Noted, will add to the snag list`;
+27/10/2026, 15:22 - AI4BI Manager: Noted, will add to the snag list`;
 
 /** Every object path under a storage prefix (list() is one level deep; folders have no id). */
 async function listFiles(prefix: string): Promise<string[]> {
