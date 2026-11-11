@@ -80,10 +80,21 @@ Environment: Windows 11, Node.js 26.8, Next.js 16.4.6 production build (`next bu
 | Retrying a half-failed import hit a unique-constraint error and could never succeed | browser (network drop) | retry clears the previous attempt's rows |
 | A dropped connection during the session check showed "not signed in" / redirected to login | browser (network drop) | 503 / retryable error instead; reads retried once |
 
+### Production (https://issueflow-ai-ai4bi.vercel.app, 11 Nov 2026)
+
+| Check | Result |
+|---|---|
+| `E2E_BASE_URL=… npm run test:e2e` with `AI_PROVIDER=groq` | **36 / 36 passed** (two consecutive clean runs; earlier runs during deploys had single navigation timeouts) |
+| Cron endpoint: no header / wrong secret → 401; valid secret → 200 and logged | pass |
+| Security headers incl. HSTS | pass |
+| Page load (signed in, from India), functions in `iad1` → `syd1` | 1.5–2.4 s → **0.55–1.0 s**; sign-in 4.3 s → 2.7 s; cron 3.9 s → 1.2 s |
+
+Found on production and fixed: server-rendered times were in UTC (Vercel) and re-rendered in the browser's zone, causing React hydration error #418 — now one app time zone everywhere.
+
 ### Not verified
 
 - **xAI Grok end-to-end.** No xAI key was used (paid). Request building and response parsing are unit-tested; a real call has not been made. (GroqCloud, a different provider, *was* verified end-to-end.)
-- **Vercel deployment and Vercel Cron.** Not deployed yet; cron was exercised locally over HTTP with the bearer secret.
+- **Scheduled Vercel Cron runs.** The endpoint works on production with the secret; the first run triggered by Vercel's scheduler had not happened yet at the time of testing.
 - **Email delivery** (confirmation, reset, invite). Email confirmation was off for testing; the forgot-password check used an address with no account so no email was sent.
 - **Real WhatsApp exports from many locales.** The parser is tested with Android/iOS, 12/24 h, dotted and ISO formats and localised attachment markers, using synthetic fixtures.
 - Browsers other than Chromium-based Edge; screen-reader testing.

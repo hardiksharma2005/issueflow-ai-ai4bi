@@ -1,6 +1,6 @@
 # 08 · Deployment
 
-> **Status:** verified locally (production build + `next start`) against a real Supabase project. Vercel deployment, Vercel Cron and GitHub have **not** been set up yet; the steps below are what to do, not a record of something already done.
+> **Status (11 Nov 2026):** deployed at https://issueflow-ai-ai4bi.vercel.app from GitHub `hardiksharma2005/issueflow-ai-ai4bi` (every push to `main` deploys). Verified on production: the full browser suite (36 checks, with GroqCloud), security headers, and the cron endpoint (401 without / 200 with the secret). Scheduled Vercel Cron runs start at the next scheduled time — check the Automations page the day after deploying.
 
 ## 1. Supabase (free tier)
 

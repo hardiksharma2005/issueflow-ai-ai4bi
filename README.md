@@ -102,7 +102,7 @@ Grok usage is **billed per token by xAI** (see [docs/05-ai-integration.md](docs/
 
 ## Known limitations
 
-- **Deployment is not done yet.** The app has been verified locally against a real Supabase project; Vercel deployment and Vercel Cron scheduling have not been run. See [docs/08-deployment.md](docs/08-deployment.md).
+- **Deployed** at https://issueflow-ai-ai4bi.vercel.app (Vercel, functions in `syd1` next to the Supabase database) and verified with the full browser suite. The cron endpoint is verified over HTTP with the secret; the first *scheduled* run by Vercel Cron happens at the next scheduled time and is visible on the Automations page.
 - **xAI Grok has not been called end-to-end** (paid); its request building and response parsing are unit-tested. **GroqCloud has been verified end-to-end** with the sample chat.
 - With Groq, screenshots are stored and linked as evidence but not read by the model, and the free plan's per-minute token limit makes large chats slower (processed in batches of 60 messages, waiting when rate-limited).
 - The mock provider is a rule-based heuristic tuned on realistic support chats. It is good enough to demonstrate the workflow, not a substitute for a model.
